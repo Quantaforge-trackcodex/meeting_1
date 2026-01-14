@@ -1,458 +1,246 @@
-import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useCallback, useMemo } from 'react';
+import { Editor } from '@monaco-editor/react';
 import { 
-  AreaChart, 
-  Area, 
-  ResponsiveContainer, 
-  Tooltip as RechartsTooltip, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Legend 
-} from 'recharts';
-import { forgeAIService } from '../services/gemini';
-import { colab } from '../services/websocket';
-import { useForgeAI } from '../hooks/useForgeAI';
-import Spinner from '../components/ui/Spinner';
+  PanelGroup, 
+  Panel, 
+  PanelResizeHandle 
+} from 'react-resizable-panels';
+
+// --- MOCK DATA ---
 
 interface FileNode {
   name: string;
   type: 'file' | 'folder';
   children?: FileNode[];
   path: string;
-  gitStatus?: 'added' | 'modified' | 'untracked';
 }
 
 const FILE_STRUCTURE: FileNode[] = [
   {
-    name: 'src',
-    type: 'folder',
-    path: 'src',
-    children: [
+    name: 'src', type: 'folder', path: 'src', children: [
       {
-        name: 'components',
-        type: 'folder',
-        path: 'src/components',
-        children: [
-          { name: 'Button.tsx', type: 'file', path: 'src/components/Button.tsx', gitStatus: 'modified' },
+        name: 'components', type: 'folder', path: 'src/components', children: [
+          { name: 'Button.tsx', type: 'file', path: 'src/components/Button.tsx' },
           { name: 'Card.tsx', type: 'file', path: 'src/components/Card.tsx' },
-          { name: 'Input.tsx', type: 'file', path: 'src/components/Input.tsx', gitStatus: 'added' },
         ],
       },
-      { name: 'services',
-        type: 'folder',
-        path: 'src/services',
-        children: [
-          { name: 'api.ts', type: 'file', path: 'src/services/api.ts' },
-          { name: 'auth.ts', type: 'file', path: 'src/services/auth.ts' },
-        ]
+      { name: 'styles', type: 'folder', path: 'src/styles', children: [
+          { name: 'globals.css', type: 'file', path: 'src/styles/globals.css' },
+        ],
       },
-      { name: 'App.tsx', type: 'file', path: 'src/App.tsx', gitStatus: 'modified' },
-      { name: 'index.tsx', type: 'file', path: 'src/index.tsx' },
+      { name: 'App.tsx', type: 'file', path: 'src/App.tsx' },
     ],
   },
   { name: 'package.json', type: 'file', path: 'package.json' },
-  { name: 'tsconfig.json', type: 'file', path: 'tsconfig.json' },
 ];
 
-const MOCK_GRAPH_DATA = [
-  { name: 'Mon', human: 12, ai: 4 },
-  { name: 'Tue', human: 19, ai: 8 },
-  { name: 'Wed', human: 15, ai: 18 },
-  { name: 'Thu', human: 22, ai: 24 },
-  { name: 'Fri', human: 30, ai: 42 },
-  { name: 'Sat', human: 10, ai: 15 },
-  { name: 'Sun', human: 8, ai: 5 },
-];
+const FILE_CONTENTS: Record<string, string> = {
+  'Button.tsx': `import React from 'react';\n\nconst Button = () => <button>Click me</button>;\n\nexport default Button;`,
+  'Card.tsx': `import React from 'react';\n\nconst Card = ({ children }) => <div>{children}</div>;\n\nexport default Card;`,
+  'globals.css': `body {\n  margin: 0;\n  font-family: sans-serif;\n}`,
+  'App.tsx': `import React from 'react';\nimport Button from './components/Button';\n\nconst App = () => (\n  <div>\n    <h1>Welcome to TrackCodex</h1>\n    <Button />\n  </div>\n);\n\nexport default App;`,
+  'package.json': JSON.stringify({ name: 'trackcodex-app', version: '1.0.0' }, null, 2),
+};
 
-const FileEntry = ({ node, depth, expandedFolders, onToggleFolder, activeFile, onSelectFile }: any) => {
-  const isExpanded = expandedFolders.has(node.path);
+// --- SUBCOMPONENTS ---
+
+const ActivityBarItem = ({ icon, label, active = false }: { icon: string; label: string; active?: boolean }) => (
+  <button title={label} className="w-full h-12 flex items-center justify-center relative">
+    {active && <div className="absolute left-0 top-3 bottom-3 w-0.5 bg-white rounded-r-full"></div>}
+    <span className={`material-symbols-outlined !text-2xl ${active ? 'text-white' : 'text-slate-500 hover:text-white'}`}>
+      {icon}
+    </span>
+  </button>
+);
+
+const FileEntry = ({ node, depth = 0, onSelect, activeFile, expandedFolders, onToggleFolder }: any) => {
   const isFolder = node.type === 'folder';
-  const isActive = node.name === activeFile;
+  const isActive = activeFile === node.path;
+  const isExpanded = expandedFolders.has(node.path);
 
-  const getGitColor = () => {
-    if (node.gitStatus === 'added') return 'text-emerald-500';
-    if (node.gitStatus === 'modified') return 'text-amber-500';
-    return '';
+  const handleSelect = () => {
+    if (isFolder) {
+      onToggleFolder(node.path);
+    } else {
+      onSelect(node.path, node.name);
+    }
   };
 
   return (
-    <div className="select-none">
-      <div 
-        onClick={() => isFolder ? onToggleFolder(node.path) : onSelectFile(node.name)}
-        style={{ paddingLeft: `${(depth * 12) + 12}px` }}
-        className={`h-8 flex items-center gap-2 cursor-pointer transition-all group relative border-l-2 ${
-          isActive 
-            ? 'bg-primary/10 border-primary text-primary font-bold' 
-            : 'border-transparent hover:bg-white/[0.03] text-gh-text-secondary hover:text-slate-200'
-        }`}
+    <div>
+      <div
+        onClick={handleSelect}
+        style={{ paddingLeft: `${depth * 12 + 12}px` }}
+        className={`flex items-center gap-1.5 h-6 cursor-pointer text-slate-400 hover:bg-white/5 hover:text-white text-sm ${isActive ? 'bg-white/10 text-white' : ''}`}
       >
-        <div className="w-4 flex items-center justify-center">
-          {isFolder && <span className={`material-symbols-outlined !text-[16px] transition-transform duration-200 ${isExpanded ? '' : '-rotate-90'}`}>expand_more</span>}
-        </div>
-        <span className={`material-symbols-outlined !text-[18px] ${isFolder ? 'text-gh-text-secondary' : 'text-slate-500'} group-hover:scale-110 transition-transform`}>
-          {isFolder ? (isExpanded ? 'folder_open' : 'folder') : 'description'}
-        </span>
-        <span className={`text-[12px] truncate flex-1 ${getGitColor()}`}>{node.name}</span>
-        {node.gitStatus && (
-          <span className={`text-[9px] font-black uppercase tracking-tighter opacity-60 group-hover:opacity-100 mr-2 ${getGitColor()}`}>
-            {node.gitStatus === 'modified' ? 'MOD' : 'ADD'}
-          </span>
-        )}
+        {isFolder ? (
+          <span className={`material-symbols-outlined !text-base transition-transform ${isExpanded ? '' : '-rotate-90'}`}>expand_more</span>
+        ) : <div className="w-4"></div>}
+        <span className="material-symbols-outlined !text-base text-slate-500">{isFolder ? (isExpanded ? 'folder_open' : 'folder') : 'description'}</span>
+        <span>{node.name}</span>
       </div>
-      {isFolder && isExpanded && node.children && (
-        <div className="overflow-hidden">
-          {node.children.map((child: any) => (
-            <FileEntry 
-              key={child.path} 
-              node={child} 
-              depth={depth + 1} 
-              expandedFolders={expandedFolders} 
-              onToggleFolder={onToggleFolder} 
-              activeFile={activeFile} 
-              onSelectFile={onSelectFile} 
-            />
-          ))}
-        </div>
-      )}
+      {isFolder && isExpanded && node.children?.map((child: FileNode) => (
+        <FileEntry 
+          key={child.path} 
+          node={child} 
+          depth={depth + 1} 
+          onSelect={onSelect}
+          activeFile={activeFile}
+          expandedFolders={expandedFolders}
+          onToggleFolder={onToggleFolder}
+        />
+      ))}
     </div>
   );
 };
 
 const EditorView = () => {
-  const navigate = useNavigate();
-  const { getCompletion, isProcessing: aiProcessing } = useForgeAI();
-  const [activeFile, setActiveFile] = useState('Button.tsx');
-  const [showInsights, setShowInsights] = useState(true);
-  const [codeContent, setCodeContent] = useState(`import React from 'react';
-import { clsx } from 'clsx';
+  const [openFiles, setOpenFiles] = useState<string[]>(['src/App.tsx']);
+  const [activeFile, setActiveFile] = useState<string>('src/App.tsx');
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set(['src', 'src/components', 'src/styles']));
+  const [line, setLine] = useState(1);
+  const [col, setCol] = useState(1);
 
-/**
- * High-fidelity Button component
- * Standardized across the TrackCodex ecosystem
- * Powered by ForgeAI Intelligence
- */
-export const Button = ({ className, variant = 'primary', children, ...props }) => {
-  return (
-    <button
-      className={clsx(
-        'px-4 py-2 rounded-lg font-bold transition-all active:scale-95', 
-        variant === 'primary' && 'bg-primary text-white hover:brightness-110 shadow-lg shadow-primary/20'
-      )}
-      {...props}
-    >
-      {children}
-    </button>
-  );
-};`);
+  const handleFileSelect = useCallback((path: string) => {
+    if (!openFiles.includes(path)) {
+      setOpenFiles(prev => [...prev, path]);
+    }
+    setActiveFile(path);
+  }, [openFiles]);
 
-  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set(['src', 'src/components']));
-  const [remoteCursors, setRemoteCursors] = useState<any[]>([]);
-
-  useEffect(() => {
-    colab.connect('default-workspace');
-    return colab.subscribe('REMOTE_CURSOR', (data) => {
-      setRemoteCursors(prev => [...prev.filter(c => c.id !== data.id), data]);
-    });
-  }, []);
+  const handleCloseTab = (e: React.MouseEvent, path: string) => {
+    e.stopPropagation();
+    const newOpenFiles = openFiles.filter(f => f !== path);
+    setOpenFiles(newOpenFiles);
+    if (activeFile === path) {
+      setActiveFile(newOpenFiles[0] || '');
+    }
+  };
 
   const toggleFolder = useCallback((path: string) => {
     setExpandedFolders(prev => {
       const next = new Set(prev);
-      next.has(path) ? next.delete(path) : next.add(path);
+      if (next.has(path)) {
+        next.delete(path);
+      } else {
+        next.add(path);
+      }
       return next;
     });
   }, []);
 
-  const lines = useMemo(() => codeContent.split('\n'), [codeContent]);
-
-  const handleSuggest = async (lineIdx: number) => {
-    const suggestion = await getCompletion({
-      fileName: activeFile,
-      code: codeContent,
-      cursorLine: lineIdx
-    });
-    if (suggestion) {
-       console.log('AI Suggestion:', suggestion);
+  const language = useMemo(() => {
+    const ext = activeFile.split('.').pop();
+    switch (ext) {
+      case 'tsx': return 'typescript';
+      case 'css': return 'css';
+      case 'json': return 'json';
+      default: return 'plaintext';
     }
+  }, [activeFile]);
+  
+  const renderTree = (nodes: FileNode[]) => {
+    return nodes.map(node => (
+      <FileEntry 
+        key={node.path} 
+        node={node} 
+        onSelect={handleFileSelect}
+        activeFile={activeFile}
+        expandedFolders={expandedFolders}
+        onToggleFolder={toggleFolder}
+      />
+    ));
   };
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden bg-gh-bg font-display animate-in fade-in duration-500">
-      {/* Enhanced GitHub header */}
-      <header className="h-14 border-b border-gh-border bg-gh-bg flex items-center justify-between px-6 shrink-0 z-40 shadow-sm">
-        <div className="flex items-center gap-4">
-           <div className="flex items-center gap-2 text-gh-text font-semibold text-sm">
-              <span className="material-symbols-outlined !text-[20px] text-gh-text-secondary">account_tree</span>
-              <span className="text-primary hover:underline cursor-pointer font-bold">track-codex</span>
-              <span className="text-gh-text-secondary">/</span>
-              <span className="flex items-center gap-1.5 text-gh-text cursor-default">
-                <span className="material-symbols-outlined !text-[16px] text-slate-500">description</span>
-                {activeFile}
-              </span>
-           </div>
-           <div className="flex items-center gap-2 bg-gh-bg-secondary border border-gh-border rounded-md px-2 py-0.5 text-[11px] font-bold text-gh-text-secondary">
-              <span className="size-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              main
-              <span className="material-symbols-outlined !text-[14px]">expand_more</span>
-           </div>
+    <div className="flex h-full font-display bg-[#1e1e1e]">
+      {/* Activity Bar */}
+      <div className="w-12 bg-[#333333] flex flex-col items-center py-2 shrink-0 z-20">
+        <ActivityBarItem icon="description" label="Explorer" active />
+        <ActivityBarItem icon="search" label="Search" />
+        <ActivityBarItem icon="hub" label="Source Control" />
+        <ActivityBarItem icon="play_circle" label="Run and Debug" />
+        <ActivityBarItem icon="extension" label="Extensions" />
+        <div className="mt-auto">
+          <ActivityBarItem icon="account_circle" label="Account" />
+          <ActivityBarItem icon="settings" label="Settings" />
         </div>
+      </div>
 
-        <div className="flex items-center gap-3">
-           <div className="flex -space-x-2 mr-4">
-              {remoteCursors.map((c, i) => (
+      <PanelGroup direction="horizontal">
+        <Panel defaultSize={20} minSize={15}>
+          {/* File Explorer Panel */}
+          <div className="h-full bg-vscode-sidebar flex flex-col">
+            <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 px-4 py-2">Explorer</h2>
+            <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
+              {renderTree(FILE_STRUCTURE)}
+            </div>
+          </div>
+        </Panel>
+        <PanelResizeHandle className="w-1 bg-vscode-activity-bar hover:bg-primary transition-colors" />
+        <Panel>
+          <div className="flex flex-col h-full bg-vscode-editor">
+            {/* Tabs Bar */}
+            <div className="flex bg-[#252526] shrink-0 overflow-x-auto no-scrollbar">
+              {openFiles.map(path => (
                 <div 
-                  key={c.id} 
-                  className="size-7 rounded-full border-2 border-gh-bg bg-primary flex items-center justify-center text-[10px] font-black text-white shadow-xl hover:translate-y-[-2px] transition-transform cursor-help" 
-                  title={`${c.name} (Collaborating)`}
-                  style={{ zIndex: 10 - i }}
+                  key={path} 
+                  onClick={() => setActiveFile(path)}
+                  className={`flex items-center gap-2 px-3 h-9 text-sm cursor-pointer border-r border-[#1e1e1e] ${activeFile === path ? 'bg-vscode-editor text-white' : 'text-slate-400 hover:bg-[#333333]'}`}
                 >
-                   {c.name[0]}
+                  <span className="material-symbols-outlined !text-base text-blue-400">javascript</span>
+                  <span>{path.split('/').pop()}</span>
+                  <button onClick={(e) => handleCloseTab(e, path)} className="ml-2 p-0.5 rounded hover:bg-white/10 text-slate-500 hover:text-white">
+                    <span className="material-symbols-outlined !text-sm">close</span>
+                  </button>
                 </div>
               ))}
-              <button className="size-7 rounded-full border-2 border-gh-border bg-gh-bg-secondary flex items-center justify-center text-slate-500 hover:text-white transition-colors">
-                <span className="material-symbols-outlined !text-[14px]">add</span>
-              </button>
-           </div>
-           <button 
-            onClick={() => setShowInsights(!showInsights)}
-            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg border transition-all text-[12px] font-black uppercase tracking-widest active:scale-95 ${
-              showInsights 
-                ? 'bg-primary/10 border-primary text-primary shadow-[0_0_15px_rgba(88,166,255,0.2)]' 
-                : 'border-gh-border text-gh-text-secondary hover:text-white hover:border-gh-text-secondary'
-            }`}
-           >
-             <span className={`material-symbols-outlined !text-[18px] ${showInsights ? 'filled' : ''}`}>analytics</span>
-             Insights
-           </button>
-        </div>
-      </header>
-
-      <div className="flex-1 flex overflow-hidden">
-        {/* Explorer Panel */}
-        <aside className="w-[280px] border-r border-gh-border bg-gh-bg flex flex-col shrink-0 animate-in slide-in-from-left duration-300">
-          <div className="h-12 px-4 flex items-center justify-between border-b border-gh-border bg-gh-bg-secondary/50">
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gh-text-secondary">Project Explorer</span>
-            <div className="flex items-center gap-1">
-              <button className="p-1 hover:bg-white/10 rounded text-gh-text-secondary"><span className="material-symbols-outlined !text-[16px]">create_new_folder</span></button>
-              <button className="p-1 hover:bg-white/10 rounded text-gh-text-secondary"><span className="material-symbols-outlined !text-[16px]">refresh</span></button>
             </div>
-          </div>
-          <div className="flex-1 overflow-y-auto custom-scrollbar py-2">
-            {FILE_STRUCTURE.map(node => (
-              <FileEntry 
-                key={node.path} 
-                node={node} 
-                depth={0} 
-                expandedFolders={expandedFolders} 
-                onToggleFolder={toggleFolder} 
-                activeFile={activeFile} 
-                onSelectFile={setActiveFile} 
+
+            {/* Monaco Editor */}
+            <div className="flex-1 overflow-hidden">
+              <Editor
+                height="100%"
+                path={activeFile}
+                defaultValue={FILE_CONTENTS[activeFile] || ''}
+                value={FILE_CONTENTS[activeFile] || ''}
+                language={language}
+                theme="vs-dark"
+                options={{ 
+                  minimap: { enabled: false },
+                  fontSize: 14,
+                  fontFamily: 'JetBrains Mono, monospace',
+                  scrollBeyondLastLine: false,
+                }}
+                onMount={(editor) => {
+                  editor.onDidChangeCursorPosition(e => {
+                     setLine(e.position.lineNumber);
+                     setCol(e.position.column);
+                  });
+                }}
               />
-            ))}
+            </div>
           </div>
-        </aside>
+        </Panel>
+      </PanelGroup>
 
-        {/* Editor Central Area */}
-        <div className="flex-1 flex flex-col overflow-hidden min-w-0 bg-gh-bg relative animate-in zoom-in-95 duration-500">
-          <div className="m-4 rounded-xl border border-gh-border overflow-hidden flex flex-col bg-gh-bg shadow-2xl ring-1 ring-white/[0.02]">
-            <div className="h-14 bg-gh-bg-secondary border-b border-gh-border flex items-center justify-between px-5">
-              <div className="flex items-center gap-4">
-                <img src="https://picsum.photos/seed/alex/64" className="size-7 rounded-full border border-gh-border shadow-sm" alt="Author" />
-                <div className="flex flex-col">
-                   <div className="flex items-center gap-1.5 text-[12px]">
-                      <span className="font-bold text-gh-text hover:text-primary cursor-pointer transition-colors">alex-coder</span>
-                      <span className="text-gh-text-secondary">optimized core performance path</span>
-                   </div>
-                   <span className="text-[10px] text-gh-text-secondary font-medium tracking-tight">15m ago • Committed via TrackCodex Enterprise</span>
-                </div>
-              </div>
-              <div className="flex items-center gap-5">
-                 <div className="flex items-center gap-2 bg-gh-bg border border-gh-border rounded-md px-3 py-1 text-[11px] font-mono text-gh-text-secondary shadow-inner">
-                    <span className="material-symbols-outlined !text-[14px]">commit</span>
-                    89c2a12
-                 </div>
-                 <div className="h-4 w-px bg-gh-border"></div>
-                 <button className="flex items-center gap-1 text-[11px] font-black uppercase text-primary hover:underline">
-                    122 commits
-                 </button>
-              </div>
-            </div>
-
-            <div className="bg-gh-bg flex flex-col">
-               <div className="h-11 bg-gh-bg flex items-center border-b border-gh-border shrink-0 px-5">
-                  <div className="flex items-center gap-8 text-[12px] font-bold h-full">
-                     <span className="cursor-pointer border-b-2 border-primary h-full flex items-center px-1 text-gh-text">Code</span>
-                     <span className="text-gh-text-secondary hover:text-gh-text cursor-pointer h-full flex items-center px-1 transition-colors">Blame</span>
-                     <span className="text-gh-text-secondary hover:text-gh-text cursor-pointer h-full flex items-center px-1 transition-colors">History</span>
-                     <span className="text-gh-text-secondary hover:text-gh-text cursor-pointer h-full flex items-center px-1 transition-colors">Raw</span>
-                  </div>
-                  <div className="flex-1"></div>
-                  <div className="flex items-center gap-3">
-                     {aiProcessing && (
-                       <div className="flex items-center gap-2 animate-in fade-in zoom-in duration-300">
-                         <Spinner size="sm" className="text-primary" />
-                         <span className="text-[10px] font-black uppercase text-primary tracking-widest">ForgeAI Thinking</span>
-                       </div>
-                     )}
-                     <button className="p-1.5 hover:bg-white/10 rounded-md text-gh-text-secondary transition-all" title="Copy to clipboard"><span className="material-symbols-outlined !text-[20px]">content_copy</span></button>
-                     <button className="p-1.5 hover:bg-white/10 rounded-md text-gh-text-secondary transition-all" title="Download file"><span className="material-symbols-outlined !text-[20px]">download</span></button>
-                  </div>
-               </div>
-
-               <div className="overflow-y-auto custom-scrollbar font-mono text-[13px] leading-6 bg-[#010409]">
-                <div className="min-w-fit py-6">
-                  {lines.map((line, i) => (
-                    <div key={i} className="flex group relative hover:bg-primary/5 transition-colors">
-                      <div className="w-14 shrink-0 flex items-center justify-end pr-4 text-gh-text-secondary select-none border-r border-gh-border bg-gh-bg-secondary/20 h-6">
-                        <span className="text-[10px] font-bold opacity-40 group-hover:opacity-100 transition-opacity">{i + 1}</span>
-                      </div>
-                      <div className="flex-1 px-8 relative h-6 flex items-center">
-                        <pre className="text-gh-text leading-none whitespace-pre select-all">{line || ' '}</pre>
-                        <button 
-                          onClick={() => handleSuggest(i)} 
-                          className="absolute left-1 top-0 h-6 flex items-center opacity-0 group-hover:opacity-100 text-primary transition-all hover:scale-125 z-10"
-                          title="Ask ForgeAI to complete"
-                        >
-                          <span className="material-symbols-outlined !text-[16px] filled shadow-sm">auto_awesome</span>
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+      {/* Status Bar */}
+      <footer className="h-6 bg-[#007acc] text-white flex items-center justify-between px-3 text-[11px] font-medium shrink-0 z-50">
+        <div className="flex items-center gap-4 h-full">
+          <div className="flex items-center gap-1.5 hover:bg-white/10 px-2 h-full cursor-pointer">
+            <span className="material-symbols-outlined !text-[14px]">account_tree</span>
+            <span className="font-bold">main</span>
           </div>
         </div>
-
-        {/* Improved Insights Sidebar */}
-        {showInsights && (
-          <aside className="w-[400px] border-l border-gh-border bg-gh-bg flex flex-col shrink-0 animate-in slide-in-from-right duration-300 relative shadow-2xl z-20">
-            <div className="h-14 border-b border-gh-border flex items-center bg-gh-bg-secondary/50 px-6 justify-between">
-               <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-gh-text">Repository Pulse</h3>
-               <div className="flex items-center gap-1 text-[10px] font-bold text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                 <span className="material-symbols-outlined !text-[12px] filled">verified</span>
-                 HEALTHY
-               </div>
-            </div>
-            
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8">
-               {/* Multi-series activity graph */}
-               <section className="animate-in slide-in-from-bottom-2 duration-700">
-                  <div className="flex items-center justify-between mb-4 px-1">
-                    <h4 className="text-[10px] font-black uppercase text-gh-text-secondary tracking-widest">Commit Velocity</h4>
-                    <span className="text-[9px] font-black text-emerald-500 uppercase">+18% Efficiency boost</span>
-                  </div>
-                  <div className="h-56 w-full bg-gh-bg-secondary/30 border border-gh-border rounded-2xl p-4 shadow-inner">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={MOCK_GRAPH_DATA}>
-                        <defs>
-                          <linearGradient id="colorHuman" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#58a6ff" stopOpacity={0.4}/>
-                            <stop offset="95%" stopColor="#58a6ff" stopOpacity={0}/>
-                          </linearGradient>
-                          <linearGradient id="colorAI" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#8957e5" stopOpacity={0.4}/>
-                            <stop offset="95%" stopColor="#8957e5" stopOpacity={0}/>
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#30363d" vertical={false} opacity={0.5} />
-                        <XAxis dataKey="name" stroke="#484f58" fontSize={10} tickLine={false} axisLine={false} dy={5} />
-                        <YAxis hide />
-                        <RechartsTooltip 
-                          contentStyle={{ backgroundColor: '#161b22', border: '1px solid #30363d', borderRadius: '12px', fontSize: '11px', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.5)' }}
-                          itemStyle={{ padding: '2px 0' }}
-                        />
-                        <Legend iconType="circle" wrapperStyle={{ fontSize: '9px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em', paddingTop: '10px' }} />
-                        <Area type="monotone" name="Human Commits" dataKey="human" stroke="#58a6ff" strokeWidth={2} fillOpacity={1} fill="url(#colorHuman)" animationDuration={1500} />
-                        <Area type="monotone" name="AI Suggestions" dataKey="ai" stroke="#8957e5" strokeWidth={2} fillOpacity={1} fill="url(#colorAI)" animationDuration={2000} />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  </div>
-               </section>
-
-               {/* AI Intelligence Metrics Section */}
-               <section className="p-6 bg-gradient-to-br from-primary/5 to-purple-500/5 border border-primary/20 rounded-2xl relative overflow-hidden group hover:border-primary/40 transition-all duration-500">
-                  <div className="absolute -top-4 -right-4 size-40 bg-primary/10 rounded-full blur-[60px] animate-pulse"></div>
-                  <div className="flex items-center gap-3 mb-4 relative z-10">
-                    <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-lg border border-primary/20">
-                      <span className="material-symbols-outlined !text-[22px] filled">auto_awesome</span>
-                    </div>
-                    <div>
-                      <h4 className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">ForgeAI Matrix</h4>
-                      <p className="text-[14px] font-black text-white">4 optimization paths</p>
-                    </div>
-                  </div>
-                  <p className="text-[12px] text-gh-text-secondary leading-relaxed font-medium relative z-10 mb-5">
-                     Gemini 3.0 analyzed current module patterns. Detected redundant memoization in <span className="text-white font-bold">Button.tsx</span>.
-                  </p>
-                  <button className="w-full py-2.5 bg-primary text-gh-bg rounded-xl text-[11px] font-black uppercase tracking-widest hover:brightness-110 transition-all shadow-xl shadow-primary/20 flex items-center justify-center gap-2 active:scale-[0.98]">
-                     Review Logic Diff
-                     <span className="material-symbols-outlined !text-[16px]">arrow_forward</span>
-                  </button>
-               </section>
-
-               {/* Collaborator Activity */}
-               <section>
-                  <h4 className="text-[10px] font-black uppercase text-gh-text-secondary tracking-widest mb-5 px-1 flex items-center gap-2">
-                    <span className="size-1.5 rounded-full bg-primary"></span>
-                    Recent Activity
-                  </h4>
-                  <div className="space-y-4">
-                     {[
-                       { name: 'Sarah Chen', action: 'added tests for Input.tsx', time: '2h ago', img: 'sarah' },
-                       { name: 'Marcus Thorne', action: 'merged pull request #42', time: '5h ago', img: 'marcus' },
-                       { name: 'ForgeAI', action: 'autofixed 3 security flags', time: '1d ago', img: 'ai', isAI: true }
-                     ].map((item, i) => (
-                       <div key={i} className="flex gap-3 group/item cursor-default">
-                          <img src={`https://picsum.photos/seed/${item.img}/64`} className="size-8 rounded-full border border-gh-border group-hover/item:border-primary transition-colors" />
-                          <div className="flex flex-col">
-                             <p className="text-[11px] text-gh-text">
-                                <span className={`font-bold hover:underline cursor-pointer ${item.isAI ? 'text-primary' : ''}`}>{item.name}</span> {item.action}
-                             </p>
-                             <span className="text-[9px] text-gh-text-secondary uppercase font-bold tracking-tight mt-0.5">{item.time}</span>
-                          </div>
-                       </div>
-                     ))}
-                  </div>
-               </section>
-
-               {/* Languages Breakdown */}
-               <section className="pt-4">
-                  <h4 className="text-[10px] font-black uppercase text-gh-text-secondary tracking-widest mb-4 px-1">Language Composition</h4>
-                  <div className="h-2 w-full rounded-full flex overflow-hidden mb-5 bg-gh-border shadow-inner">
-                    <div className="bg-[#3178c6] h-full transition-all duration-1000" style={{ width: '82.4%' }}></div>
-                    <div className="bg-[#f1e05a] h-full transition-all duration-1000 delay-200" style={{ width: '15.1%' }}></div>
-                    <div className="bg-white/10 h-full flex-1"></div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-y-3">
-                     <div className="flex items-center justify-between px-2">
-                        <div className="flex items-center gap-2">
-                          <div className="size-2 rounded-full bg-[#3178c6] shadow-[0_0_8px_rgba(49,120,198,0.5)]"></div>
-                          <span className="font-bold text-gh-text text-[11px]">TypeScript</span>
-                        </div>
-                        <span className="text-gh-text-secondary text-[10px] font-black tracking-widest">82.4%</span>
-                     </div>
-                     <div className="flex items-center justify-between px-2 border-l border-gh-border ml-2">
-                        <div className="flex items-center gap-2">
-                          <div className="size-2 rounded-full bg-[#f1e05a] shadow-[0_0_8px_rgba(241,224,90,0.5)]"></div>
-                          <span className="font-bold text-gh-text text-[11px]">JavaScript</span>
-                        </div>
-                        <span className="text-gh-text-secondary text-[10px] font-black tracking-widest">15.1%</span>
-                     </div>
-                  </div>
-               </section>
-            </div>
-            
-            <div className="h-14 border-t border-gh-border bg-gh-bg-secondary/50 flex items-center px-6 shadow-lg">
-               <button className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-gh-text-secondary hover:text-white transition-all hover:translate-x-1 group">
-                  <span className="material-symbols-outlined !text-[18px] opacity-70 group-hover:opacity-100">history</span>
-                  View Full Audit Log
-               </button>
-            </div>
-          </aside>
-        )}
-      </div>
+        <div className="flex items-center gap-4 h-full">
+          <div className="hover:bg-white/10 px-2 h-full flex items-center cursor-pointer">
+            Ln {line}, Col {col}
+          </div>
+          <div className="hover:bg-white/10 px-2 h-full flex items-center cursor-pointer">Spaces: 2</div>
+          <div className="hover:bg-white/10 px-2 h-full flex items-center cursor-pointer">UTF-8</div>
+          <div className="hover:bg-white/10 px-2 h-full flex items-center cursor-pointer uppercase">{language}</div>
+        </div>
+      </footer>
     </div>
   );
 };

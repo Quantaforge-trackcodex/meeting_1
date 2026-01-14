@@ -1,6 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
+
+// Auth Views
+import Login from './views/auth/Login';
+import Signup from './views/auth/Signup';
 
 // VS Code Layout Components
 import StatusBar from './components/layout/StatusBar';
@@ -35,10 +40,10 @@ import AppearanceSettings from './views/settings/AppearanceSettings';
 import EmailSettings from './views/settings/EmailSettings';
 import SecuritySettings from './views/settings/SecuritySettings';
 import AccountSettings from './views/settings/AccountSettings';
+import ProfileSettings from './views/settings/ProfileSettings';
 
-const AppContent = () => {
+const ProtectedApp = () => {
   const [notification, setNotification] = useState<any>(null);
-  const [isAppLoading, setIsAppLoading] = useState(true);
   const mainScrollRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
 
@@ -50,8 +55,6 @@ const AppContent = () => {
   }, [location.pathname]);
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsAppLoading(false), 1500);
-    
     const handleNotify = (e: any) => {
       setNotification(e.detail);
       if (!e.detail.hasActions) {
@@ -63,7 +66,6 @@ const AppContent = () => {
     
     return () => {
       window.removeEventListener('trackcodex-notification', handleNotify);
-      clearTimeout(timer);
     };
   }, []);
 
@@ -80,8 +82,6 @@ const AppContent = () => {
 
     setTimeout(() => setNotification(null), 3000);
   };
-
-  if (isAppLoading) return <SplashScreen />;
 
   const isIdeView = ['/editor', '/workspace/'].some(path => location.pathname.includes(path));
 
@@ -147,12 +147,11 @@ const AppContent = () => {
             <Route path="/profile" element={<ProfileView />} />
             <Route path="/activity" element={<ActivityView />} />
             
-            {/* New Modular Settings Routes */}
             <Route path="/settings/*" element={
               <SettingsLayout>
                 <Routes>
                   <Route index element={<Navigate to="profile" replace />} />
-                  <Route path="profile" element={<ProfileView />} />
+                  <Route path="profile" element={<ProfileSettings />} />
                   <Route path="appearance" element={<AppearanceSettings />} />
                   <Route path="emails" element={<EmailSettings />} />
                   <Route path="security" element={<SecuritySettings />} />
@@ -172,7 +171,7 @@ const AppContent = () => {
                 </RoleGuard>
               } 
             />
-            <Route path="*" element={<HomeView />} />
+            <Route path="*" element={<Navigate to="/dashboard/home" />} />
           </Routes>
         </main>
       </div>
@@ -183,10 +182,40 @@ const AppContent = () => {
   );
 };
 
+const AppContent = () => {
+  const { isAuthenticated, isLoading } = useAuth();
+  const [isAppLoading, setIsAppLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsAppLoading(false), 1500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (isLoading || isAppLoading) {
+    return <SplashScreen />;
+  }
+  
+  return (
+     <Routes>
+      {!isAuthenticated ? (
+        <>
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </>
+      ) : (
+        <Route path="/*" element={<ProtectedApp />} />
+      )}
+    </Routes>
+  );
+};
+
 const App = () => (
   <ThemeProvider>
     <HashRouter>
-      <AppContent />
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
     </HashRouter>
   </ThemeProvider>
 );

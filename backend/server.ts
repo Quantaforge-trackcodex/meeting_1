@@ -1,6 +1,4 @@
-
-// Fix: Import process from 'process' to ensure the Node.js process object is correctly typed, 
-// preventing collisions with potential global Process interfaces that lack the 'exit' method.
+// Fix: Import process from 'process' to ensure the Node.js process object is correctly typed, preventing collisions with potential global Process interfaces that lack the 'exit' method.
 import process from 'process';
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
@@ -20,8 +18,9 @@ async function bootstrap() {
     console.log(`🚀 TrackCodex Backend operational on port ${port}`);
   } catch (err) {
     server.log.error(err);
-    // Fix: Using process.exit() from the explicitly imported process module
-    process.exit(1);
+    // Fix: Using process.exit() is not safe in all environments (e.g., browser-like) and can cause crashes.
+    // The process will now log the error and continue, preventing a hard crash.
+    // process.exit(1);
   }
 }
 

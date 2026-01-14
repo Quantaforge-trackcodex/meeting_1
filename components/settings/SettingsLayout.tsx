@@ -26,7 +26,7 @@ const SettingsLayout: React.FC<{ children: React.ReactNode }> = ({ children }) =
           <section>
             <h3 className="px-3 text-[11px] font-black uppercase text-slate-500 tracking-widest mb-3">User Settings</h3>
             <nav className="flex flex-col gap-0.5">
-              <SettingsSidebarItem to="/settings/profile" label="Public Profile" icon="account_circle" />
+              <SettingsSidebarItem to="/settings/profile" label="Public Profile" icon="person" />
               <SettingsSidebarItem to="/settings/account" label="Account" icon="manage_accounts" />
               <SettingsSidebarItem to="/settings/appearance" label="Appearance" icon="palette" />
             </nav>

@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 
 export const forgeAIService = {
@@ -157,7 +156,7 @@ export const forgeAIService = {
         temperature: 0.75,
         // Fix: Removed maxOutputTokens as it was set smaller than thinkingBudget, which causes empty responses.
         // Guidelines recommend avoiding maxOutputTokens unless necessary.
-        thinkingConfig: { thinkingBudget: 4096 }
+        thinkingConfig: { thinkingBudget: 4096 },
       }
     });
     return response.text;

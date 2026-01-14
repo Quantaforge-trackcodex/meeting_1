@@ -86,11 +86,21 @@ const ProfileView = () => {
     { label: 'AI & ForgeAI', icon: 'auto_awesome' },
     { label: 'Community', icon: 'hub' },
     { label: 'Jobs', icon: 'work' },
-    { label: 'Activity', icon: 'history' }
   ];
 
   const handleTabClick = (label: string) => {
-    setActiveTab(label);
+    const pathMap: Record<string, string> = {
+      'Security': '/activity',
+      'AI & ForgeAI': '/forge-ai',
+      'Community': '/community',
+      'Jobs': '/dashboard/jobs'
+    };
+
+    if (pathMap[label]) {
+      navigate(pathMap[label]);
+    } else {
+      setActiveTab(label);
+    }
   };
 
   return (
@@ -117,7 +127,7 @@ const ProfileView = () => {
                 {tab.badge && (
                   <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                     tab.label === 'Security' 
-                      ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' 
+                      ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
                       : 'bg-gh-bg-secondary text-gh-text-secondary border border-gh-border'
                   }`}>
                     {tab.badge}
@@ -170,12 +180,6 @@ const ProfileView = () => {
 
             {activeTab === 'Code & Repos' && <ProfileRepositories />}
             
-            {activeTab === 'Activity' && (
-              <div className="max-w-3xl">
-                <ActivityFeed />
-              </div>
-            )}
-
             {['Security', 'AI & ForgeAI', 'Community', 'Jobs'].includes(activeTab) && (
               <div className="flex flex-col items-center justify-center py-20 bg-gh-bg-secondary border border-gh-border border-dashed rounded-xl">
                  <div className="size-14 rounded-full bg-primary/5 flex items-center justify-center text-primary mb-4">
