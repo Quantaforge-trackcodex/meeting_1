@@ -1,5 +1,4 @@
-
-import { Workspace, AITask, SecurityAlert, Repository, LiveSession, ProfileData, LibraryResource, LibraryCategory, Job, Organization } from './types';
+import { Workspace, AITask, SecurityAlert, Repository, LiveSession, ProfileData, LibraryResource, LibraryCategory, Job, Organization, Candidate, TrialRepo, GrowthPathItem, SkillRadarData, OnboardingTask } from './types';
 
 export const MOCK_REPOS: Repository[] = [
   {
@@ -170,86 +169,6 @@ export const MOCK_LIBRARY_RESOURCES: LibraryResource[] = [
     snippetPreview: `import express from 'express';\nimport { rateLimit } from 'express-rate-limit';\n\nconst limiter = rateLimit({\n  windowMs: 15 * 60 * 1000,\n  max: 100\n});\n\napp.use(limiter);`
   },
   {
-    id: 'etl-pipeline-secure',
-    name: 'etl-pipeline-secure',
-    description: 'Robust data ingestion script with PII redaction capabilities and encrypted logging. Ideal for healthcare data processing.',
-    category: 'Backend API',
-    techStack: 'Python',
-    techColor: '#facc15',
-    stars: 3200,
-    forks: 890,
-    lastUpdated: '5 days ago',
-    visibility: 'PUBLIC',
-    isAudited: true,
-    type: 'Snippet',
-    tags: ['Pandas', 'Security'],
-    version: 'v1.0.4'
-  },
-  {
-    id: 'microservice-base-go',
-    name: 'microservice-base-go',
-    description: 'High-performance boilerplate with built-in gRPC support, Prometheus metrics, and distributed tracing via Jaeger.',
-    category: 'Backend API',
-    techStack: 'Go',
-    techColor: '#00add8',
-    stars: 1800,
-    forks: 340,
-    lastUpdated: '1 week ago',
-    visibility: 'PUBLIC',
-    isAudited: false,
-    type: 'Template',
-    tags: ['gRPC', 'Tracing'],
-    version: 'v0.8.2'
-  },
-  {
-    id: 'aes-256-wrapper',
-    name: 'aes-256-wrapper',
-    description: 'Memory-safe implementation of AES-256-GCM for encrypting sensitive configuration files at rest. Zero-dependency.',
-    category: 'Backend API',
-    techStack: 'Rust',
-    techColor: '#f97316',
-    stars: 980,
-    forks: 150,
-    lastUpdated: '3 weeks ago',
-    visibility: 'PUBLIC',
-    isAudited: true,
-    type: 'Snippet',
-    tags: ['Crypto', 'AES'],
-    version: 'v1.2.0'
-  },
-  {
-    id: 'sqli-prevention-paper',
-    name: 'sqli-prevention-paper',
-    description: 'Academic paper discussing modern techniques for preventing SQL injection in ORM-less environments using prepared statements.',
-    category: 'Research Papers',
-    techStack: 'Markdown',
-    techColor: '#888',
-    stars: 14000,
-    forks: 0,
-    lastUpdated: '1 month ago',
-    visibility: 'RESEARCH',
-    isAudited: false,
-    type: 'Paper',
-    tags: ['SQLi', 'Database'],
-    version: '2023-Final'
-  },
-  {
-    id: 'graphql-server-hardened',
-    name: 'graphql-server-hardened',
-    description: 'Opinionated GraphQL server setup with depth limiting, cost analysis, and disabled introspection for production.',
-    category: 'Backend API',
-    techStack: 'TypeScript',
-    techColor: '#3178c6',
-    stars: 2400,
-    forks: 560,
-    lastUpdated: '2 weeks ago',
-    visibility: 'PUBLIC',
-    isAudited: true,
-    type: 'Kit',
-    tags: ['GraphQL', 'Security'],
-    version: 'v2.0.1'
-  },
-  {
     id: 'dashboard-pro-kit',
     name: 'Enterprise Dashboard UI Kit & Prompt',
     description: 'A comprehensive UI design system and AI generation prompt for building secure, data-dense enterprise dashboards.',
@@ -271,11 +190,6 @@ export const MOCK_LIBRARY_RESOURCES: LibraryResource[] = [
 
 export const MOCK_LIBRARY_CATEGORIES: LibraryCategory[] = [
   { id: 'backend-api', name: 'Backend API', icon: 'api', count: 12 },
-  { id: 'frontend-spa', name: 'Frontend SPA', icon: 'web_asset', count: 8 },
-  { id: 'microservice', name: 'Microservice', icon: 'grid_view', count: 15 },
-  { id: 'security-patterns', name: 'Security Patterns', icon: 'security', count: 24 },
-  { id: 'utilities', name: 'Utilities', icon: 'build', count: 10 },
-  { id: 'research-papers', name: 'Research Papers', icon: 'menu_book', count: 5 },
   { id: 'ui-design', name: 'UI & Design', icon: 'design_services', count: 4 }
 ];
 
@@ -312,39 +226,6 @@ export const MOCK_JOBS: Job[] = [
     },
     postedDate: 'Yesterday'
   },
-  {
-    id: 'job-3',
-    title: 'Senior Go Backend Engineer',
-    description: 'Join our team full-time to lead the infrastructure migration to a microservices architecture.',
-    longDescription: 'Looking for a long-term partner to help us scale our backend infrastructure. You will be responsible for designing gRPC interfaces, implementing distributed tracing, and mentoring junior engineers. This is a high-impact role with competitive equity.',
-    budget: '$160k/year',
-    type: 'Full-time',
-    status: 'Open',
-    techStack: ['Go', 'Kubernetes', 'gRPC'],
-    repoId: 'trackcodex-backend',
-    creator: {
-      name: 'TrackCodex Core',
-      avatar: 'https://picsum.photos/seed/track/64'
-    },
-    postedDate: '3 days ago'
-  },
-  {
-    id: 'job-4',
-    title: 'Mobile Camera WebSocket Integration',
-    description: 'Implement real-time camera stream syncing via WebSockets for a Flutter application.',
-    budget: '$2,500',
-    type: 'Gig',
-    status: 'Completed',
-    techStack: ['Dart', 'Flutter', 'WebSockets'],
-    repoId: 'mobile-app-flutter',
-    creator: {
-      name: 'FieldAgent Inc',
-      avatar: 'https://picsum.photos/seed/field/64'
-    },
-    postedDate: '1 week ago',
-    rating: 5,
-    feedback: 'Excellent work! The latency is incredibly low and the implementation is clean.'
-  }
 ];
 
 export const MOCK_ORGANIZATIONS: Organization[] = [
@@ -367,18 +248,152 @@ export const MOCK_ORGANIZATIONS: Organization[] = [
       { id: 't2', name: 'Frontend Guild', description: 'Maintains all user-facing applications and design systems.', memberCount: 12, repoCount: 4 },
       { id: 't3', name: 'ForgeAI Research', description: 'R&D for the ForgeAI engine and related services.', memberCount: 5, repoCount: 1 },
     ],
-  },
-  {
-    id: 'opensource-collective',
-    name: 'Open Source Collective',
-    avatar: 'https://picsum.photos/seed/opensource/200',
-    description: 'A collective of open-source contributors focused on building public goods for the developer community.',
-    website: 'opensource.dev',
-    location: 'Remote',
-    repositories: MOCK_REPOS.slice(3),
-    members: [
-      { username: 'alexcoder', name: 'Alex Chen', avatar: 'https://picsum.photos/seed/alexprofile/64', role: 'Member', lastActive: '1 day ago' },
-    ],
-    teams: [],
   }
+];
+
+// --- NEW HIRING & GROWTH MOCK DATA ---
+
+export const MOCK_CANDIDATES: Candidate[] = [
+    { 
+        id: 'jane-doe', 
+        name: 'Jane Doe', 
+        role: 'Senior Software Engineer Applicant',
+        location: 'San Francisco, CA',
+        avatar: 'https://picsum.photos/seed/janedoe/64', 
+        aiComplexityScore: 92,
+        codeReplayUrl: '#',
+        techScore: 94,
+        cultureFit: 88,
+        complexity: 'High',
+        experience: '8y+',
+        technicalEvidence: [
+            { title: 'Refactored Middleware Logic', description: 'Replaced nested callbacks with clean async/await patterns and error handlers.', complexity: 94, quality: 96, timestamp: '00:42:16' },
+            { title: 'Database Schema Optimization', description: 'Identified and fixed a critical N+1 query issue in the data fetching layer.', complexity: 88, quality: 92, timestamp: '01:16:02' }
+        ],
+        linesChanged: { added: 482, removed: 24 },
+        testingCoverage: 92,
+        maintainability: 'A+',
+        qualitativeNotes: [
+            { author: 'Sarah Chen', avatar: 'https://picsum.photos/seed/sarah/64', rating: 5, note: 'Deep understanding of distributed systems. She just didn’t solve the coding prompt, she discussed architectural tradeoffs for production.', tags: ['Architecture', 'Leadership'], strengths: ['Highly articulate about technical tradeoffs', 'Proactive mentoring mindset'], potentials: ['Limited experience with Kubernetes'] }
+        ]
+    },
+    { 
+        id: 'alex-chen', 
+        name: 'Alex Chen', 
+        role: 'Staff Engineer @ TechFlow',
+        avatar: 'https://picsum.photos/seed/alexchen/64', 
+        aiComplexityScore: 88,
+        aiComplexityDepth: 'High Depth',
+        codeReplayUrl: '#',
+        prQuality: 94,
+        status: 'Top Match',
+        codeReplayHighlights: ['Refactored with logic from O(n) to O(1) during live session.'],
+        interviewerSentiment: 4.8,
+        techStackMatch: [{ skill: 'Go', alignment: 95 }, { skill: 'K8s', alignment: 80 }, { skill: 'Redis', alignment: 98 }],
+        trialPRLink: '#402',
+        decision: 'Extend Offer'
+    },
+    { 
+        id: 'sarah-smith', 
+        name: 'Sarah Smith', 
+        role: 'Sr. Backend @ Cloudscale',
+        avatar: 'https://picsum.photos/seed/sarahsmith/64', 
+        aiComplexityScore: 94,
+        aiComplexityDepth: 'Elite',
+        codeReplayUrl: '#',
+        prQuality: 92,
+        status: 'Passing',
+        codeReplayHighlights: ['Optimized Postgres queries with intelligent indexing.', 'Integrated Redis caching for hot path calls.'],
+        interviewerSentiment: 4.9,
+        techStackMatch: [{ skill: 'Go', alignment: 100 }, { skill: 'K8s', alignment: 90 }, { skill: 'Redis', alignment: 95 }],
+        trialPRLink: '#415',
+        decision: 'Schedule Final'
+    },
+     { 
+        id: 'jordan-lee', 
+        name: 'Jordan Lee', 
+        role: 'Lead Dev @ DataPulse',
+        avatar: 'https://picsum.photos/seed/jordanlee/64', 
+        aiComplexityScore: 85,
+        aiComplexityDepth: 'Standard',
+        codeReplayUrl: '#',
+        prQuality: 88,
+        status: 'Archived',
+        codeReplayHighlights: ['Followed standard MVC patterns consistently.'],
+        interviewerSentiment: 3.8,
+        techStackMatch: [{ skill: 'Go', alignment: 80 }, { skill: 'Docker', alignment: 90 }],
+        trialPRLink: '#389',
+        decision: 'Archive'
+    }
+];
+
+
+export const MOCK_TRIAL_REPOS: TrialRepo[] = [
+    {
+        id: 'trial-1',
+        title: 'Senior Backend Engineer',
+        company: 'Stripe',
+        location: 'Remote, Global',
+        salaryRange: '$180k - $240k',
+        status: 'Newly Active',
+        description: 'Refactor the Rate Limiter in the Go SDK',
+        challenges: ['Implement a fixed window strategy for traffic management.', 'Ensure zero-downtime and maintain backwards compatibility.'],
+        tech: ['Go', 'Redis', 'gRPC'],
+        deployments: 12,
+        coverage: 98,
+        avgPrReview: '45m',
+        logo: 'https://cdn.worldvectorlogo.com/logos/stripe-2.svg',
+    },
+    {
+        id: 'trial-2',
+        title: 'Core Systems Engineer',
+        company: 'Vercel',
+        location: 'SF / Remote',
+        salaryRange: '$200k - $280k',
+        status: 'Updated',
+        description: 'Optimize Edge Function Cold Starts via WASM',
+        challenges: ['Analyze current boot times using internal telemetry.', 'Implement a pre-warming strategy for WASM modules in the Edge Runtime.'],
+        tech: ['Rust', 'WASM', 'Node.js'],
+        deployments: 8,
+        coverage: 99,
+        avgPrReview: '15m',
+        logo: 'https://cdn.worldvectorlogo.com/logos/vercel.svg',
+    },
+    {
+        id: 'trial-3',
+        title: 'Platform Engineer (K8s)',
+        company: 'Monzo',
+        location: 'London / Remote',
+        salaryRange: '£110k - £160k',
+        status: 'Updated',
+        description: 'Hardening Multi-cluster mTLS Auth',
+        challenges: ['Identify and fix a race condition in the Istio-based certificate rotation service.', 'Improve observability by adding Prometheus metrics.'],
+        tech: ['Kubernetes', 'AWS', 'Istio'],
+        deployments: 4,
+        coverage: 100,
+        avgPrReview: '2h',
+        logo: 'https://cdn.worldvectorlogo.com/logos/monzo-2.svg',
+    },
+];
+
+export const MOCK_GROWTH_DATA = {
+    skillRadar: [
+        { subject: 'System Design', score: 85, fullMark: 100 },
+        { subject: 'Frontend', score: 70, fullMark: 100 },
+        { subject: 'Backend', score: 90, fullMark: 100 },
+        { subject: 'Security', score: 95, fullMark: 100 },
+        { subject: 'Leadership', score: 75, fullMark: 100 },
+    ] as SkillRadarData[],
+    growthPath: [
+        { skill: 'Kubernetes', category: 'DevOps', currentProficiency: 75, targetLevel: 'Staff Engineer', recommendation: 'Level Up Soon' },
+        { skill: 'GraphQL', category: 'API', currentProficiency: 45, targetLevel: 'Intermediate', recommendation: 'View Internal Docs' },
+        { skill: 'Cybersecurity', category: 'Security', currentProficiency: 88, targetLevel: 'Advanced', recommendation: 'Exam Prep' }
+    ] as GrowthPathItem[],
+};
+
+export const MOCK_ONBOARDING_TASKS: OnboardingTask[] = [
+    { id: '1', title: 'Request SSH keys & VPN access', description: 'Completed 2 days ago', status: 'completed', type: 'required' },
+    { id: '2', title: 'Local environment setup (Docker & Node v20)', description: 'Priority: High', status: 'pending', type: 'priority' },
+    { id: '3', title: 'Initial commit to personal sandbox repo', description: 'Due by Friday', status: 'pending', type: 'goal' },
+    { id: '4', title: 'Join #eng-general and introduce yourself', description: 'Social goal', status: 'pending', type: 'social' },
 ];

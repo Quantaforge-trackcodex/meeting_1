@@ -9,7 +9,7 @@ export interface UserRole {
 }
 
 export interface Workspace {
-  id: string;
+  id:string;
   name: string;
   status: 'Running' | 'Stopped';
   runtime: string;
@@ -280,4 +280,95 @@ export interface PersonalAccessToken {
   scopes: string[];
   expiresAt: number | null; // timestamp or null for no expiry
   createdAt: number;
+}
+
+// --- Hiring & Growth Types ---
+export interface SkillProficiency {
+  skill: string;
+  proficiency: number;
+}
+
+export interface GrowthPathItem {
+  skill: string;
+  category: string;
+  currentProficiency: number;
+  targetLevel: string;
+  recommendation: string;
+}
+
+export interface SkillRadarData {
+  subject: string;
+  score: number;
+  fullMark: number;
+}
+
+export interface Candidate {
+  id: string;
+  name: string;
+  role: string;
+  avatar: string;
+  location?: string;
+  aiComplexityScore: number;
+  codeReplayUrl: string; // for highlights
+  prQuality?: number; // for discovery view
+  status?: 'Passing' | 'Idle' | 'Archived' | 'Top Match'; // for discovery view
+  
+  // For Comparison View
+  aiComplexityDepth?: 'High Depth' | 'Elite' | 'Standard';
+  codeReplayHighlights?: string[];
+  interviewerSentiment?: number;
+  techStackMatch?: { skill: string, alignment: number }[];
+  trialPRLink?: string;
+  decision?: 'Extend Offer' | 'Schedule Final' | 'Archive';
+
+  // For Scorecard View
+  techScore?: number;
+  cultureFit?: number;
+  complexity?: string; // "High", "Medium", etc.
+  experience?: string; // "8y+", etc.
+  technicalEvidence?: {
+    title: string;
+    description: string;
+    complexity: number;
+    quality: number;
+    timestamp: string;
+  }[];
+  linesChanged?: { added: number, removed: number };
+  testingCoverage?: number;
+  maintainability?: string;
+  qualitativeNotes?: {
+    author: string;
+    avatar: string;
+    rating: number;
+    note: string;
+    tags: string[];
+    strengths: string[];
+    potentials: string[];
+  }[];
+}
+
+
+export interface TrialRepo {
+  id: string;
+  title: string;
+  company: string;
+  location: string;
+  salaryRange: string;
+  status: 'Newly Active' | 'Updated';
+  description: string;
+  challenges: string[];
+  tech: string[];
+  deployments: number;
+  coverage: number;
+  avgPrReview: string;
+  logo: string;
+}
+
+export interface OnboardingTask {
+  id: string;
+  title: string;
+  description: string;
+  status: 'completed' | 'pending' | 'locked';
+  dueDate?: string;
+  type: 'required' | 'priority' | 'social' | 'goal';
 }

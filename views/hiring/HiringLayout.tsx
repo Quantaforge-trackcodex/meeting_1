@@ -1,0 +1,63 @@
+import React from 'react';
+import { NavLink, Routes, Route, Navigate } from 'react-router-dom';
+import CandidateDiscoveryView from './CandidateDiscoveryView';
+import CandidateScorecardView from './CandidateScorecardView';
+import CandidateComparisonView from './CandidateComparisonView';
+import OfferEditorView from './OfferEditorView';
+import SessionSchedulerView from './SessionSchedulerView';
+import InterviewerFeedbackView from './InterviewerFeedbackView';
+import AssessmentsView from './AssessmentsView';
+
+const HiringNavItem = ({ to, icon, label }: { to: string, icon: string, label: string }) => (
+    <NavLink
+        to={to}
+        end
+        className={({ isActive }) =>
+            `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-bold transition-all ${
+                isActive ? 'bg-gh-bg-secondary text-white' : 'text-slate-400 hover:bg-white/5 hover:text-white'
+            }`
+        }
+    >
+        <span className="material-symbols-outlined !text-base">{icon}</span>
+        {label}
+    </NavLink>
+);
+
+const HiringLayout = () => {
+    const basePath = '/hiring';
+
+    return (
+        <div className="flex-1 flex bg-[#0d1117] font-display">
+            <aside className="w-64 p-6 border-r border-gh-border flex flex-col">
+                <div className="mb-8">
+                    <h2 className="text-lg font-bold text-white">Hiring Pipeline</h2>
+                    <p className="text-xs text-slate-500 mt-1">Engineering Pipeline</p>
+                </div>
+                <nav className="flex flex-col gap-1">
+                    <HiringNavItem to={`${basePath}/discovery`} icon="person_search" label="Candidate Discovery" />
+                    <HiringNavItem to={`${basePath}/assessments`} icon="signal_cellular_alt" label="Assessments" />
+                    <HiringNavItem to={`${basePath}/jobs`} icon="work_outline" label="Jobs" />
+                    <HiringNavItem to={`${basePath}/analytics`} icon="analytics" label="Analytics" />
+                </nav>
+                <div className="mt-auto">
+                    <button className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-bold text-sm">New Assessment</button>
+                </div>
+            </aside>
+            <main className="flex-1 overflow-y-auto custom-scrollbar p-8">
+                <Routes>
+                    <Route index element={<Navigate to="discovery" replace />} />
+                    <Route path="discovery" element={<CandidateDiscoveryView />} />
+                    <Route path="candidate/:id" element={<CandidateScorecardView />} />
+                    <Route path="compare" element={<CandidateComparisonView />} />
+                    <Route path="offer/:id" element={<OfferEditorView />} />
+                    <Route path="schedule/:id" element={<SessionSchedulerView />} />
+                    <Route path="feedback/:id" element={<InterviewerFeedbackView />} />
+                    <Route path="assessments" element={<AssessmentsView />} />
+                    <Route path="*" element={<Navigate to="discovery" replace />} />
+                </Routes>
+            </main>
+        </div>
+    );
+};
+
+export default HiringLayout;
