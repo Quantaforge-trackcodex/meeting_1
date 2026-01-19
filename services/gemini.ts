@@ -154,8 +154,6 @@ export const forgeAIService = {
       - Since this is a live session, if you detect a potential issue in the mentioned context, point it out politely.`,
       config: {
         temperature: 0.75,
-        // Fix: Removed maxOutputTokens as it was set smaller than thinkingBudget, which causes empty responses.
-        // Guidelines recommend avoiding maxOutputTokens unless necessary.
         thinkingConfig: { thinkingBudget: 4096 },
       }
     });

@@ -50,6 +50,17 @@ const Repositories = () => {
     return saved ? JSON.parse(saved) : MOCK_REPOS;
   });
 
+  const renderMarkdown = (text: string) => {
+    if (!text) return '';
+    return text
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/__(.*?)__/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(/_(.*?)_/g, '<em>$1</em>')
+      .replace(/`([^`]+)`/g, '<code class="bg-black/20 px-1.5 py-0.5 rounded text-xs font-mono text-amber-400">$1</code>')
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">$1</a>');
+  };
+
   const handleCreateRepo = (newRepoData: Partial<Repository>) => {
     const newRepo = {
       ...newRepoData,
@@ -140,7 +151,12 @@ const Repositories = () => {
           {filteredRepos.map(repo => (
             <div 
               key={repo.id}
-              className="group bg-[#161b22] border border-[#30363d] rounded-3xl p-7 hover:border-[#8b949e] transition-all flex flex-col relative overflow-hidden shadow-sm hover:shadow-2xl animate-in slide-in-from-bottom-2"
+              onClick={(e: React.MouseEvent<HTMLDivElement>) => {
+                if ((e.target as HTMLElement).tagName !== 'A') {
+                  navigate(`/repo/${repo.id}`);
+                }
+              }}
+              className="group bg-[#161b22] border border-[#30363d] rounded-3xl p-7 hover:border-[#8b949e] transition-all flex flex-col relative overflow-hidden shadow-sm hover:shadow-2xl animate-in slide-in-from-bottom-2 cursor-pointer"
             >
               <div className="flex items-start justify-between mb-5">
                 <div className="flex items-center gap-4">
@@ -152,7 +168,7 @@ const Repositories = () => {
                     )}
                   </div>
                   <div>
-                    <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate(`/repo/${repo.id}`)}>
+                    <div className="flex items-center gap-2">
                       <h3 className="text-lg font-black text-slate-100 group-hover:text-primary transition-colors leading-none uppercase tracking-tight">{repo.name}</h3>
                     </div>
                     <div className="flex items-center gap-2 mt-1.5">
@@ -163,9 +179,10 @@ const Repositories = () => {
                 </div>
               </div>
 
-              <p className="text-[13px] text-slate-400 leading-relaxed mb-8 h-12 line-clamp-2 overflow-hidden font-medium">
-                {repo.description}
-              </p>
+              <div
+                className="text-[13px] text-slate-400 leading-relaxed mb-8 h-12 line-clamp-2 overflow-hidden font-medium prose prose-sm prose-invert max-w-none"
+                dangerouslySetInnerHTML={{ __html: renderMarkdown(repo.description) }}
+              />
 
               <div className="grid grid-cols-2 gap-4 bg-[#0d1117] border border-[#30363d] p-5 rounded-2xl mb-8">
                 <AIHealthIndicator score={repo.aiHealth} label={repo.aiHealthLabel} />

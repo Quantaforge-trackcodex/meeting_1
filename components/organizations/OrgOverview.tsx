@@ -1,6 +1,6 @@
 import React from 'react';
 import { Organization, PinnedRepo } from '../../types';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 
 const PinnedRepoCard = ({ repo }: { repo: PinnedRepo }) => (
     <div className="p-4 bg-[#0d1117] border border-[#30363d] rounded-lg group hover:border-[#8b949e] transition-all cursor-pointer flex flex-col">
@@ -26,7 +26,8 @@ const PinnedRepoCard = ({ repo }: { repo: PinnedRepo }) => (
     </div>
 );
 
-const OrgOverview = ({ org }: { org: Organization }) => {
+const OrgOverview = () => {
+    const { org } = useOutletContext<{ org: Organization }>();
     const navigate = useNavigate();
 
     // Mock pinned repos from org repos

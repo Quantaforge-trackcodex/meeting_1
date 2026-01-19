@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { Organization } from '../../../types';
+import { useOutletContext } from 'react-router-dom';
 
-const OrgGeneralSettings = ({ org }: { org: Organization }) => {
+const OrgGeneralSettings = () => {
+    const { org } = useOutletContext<{ org: Organization }>();
     const [name, setName] = useState(org.name);
     const [description, setDescription] = useState(org.description);
 

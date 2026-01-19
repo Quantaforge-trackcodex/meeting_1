@@ -1,5 +1,5 @@
 import React from 'react';
-import { useParams, NavLink, Routes, Route, Navigate } from 'react-router-dom';
+import { useParams, NavLink, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { MOCK_ORGANIZATIONS } from '../../constants';
 import OrgOverview from '../../components/organizations/OrgOverview';
 import OrgRepositories from '../../components/organizations/OrgRepositories';
@@ -66,27 +66,8 @@ const OrganizationDetailView = () => {
                 </div>
             </header>
 
-            <main className="flex-1">
-                <Routes>
-                    <Route index element={<OrgOverview org={org} />} />
-                    <Route path="repositories" element={<OrgRepositories repos={org.repositories} />} />
-                    <Route path="people" element={<OrgPeople members={org.members} />} />
-                    <Route path="teams" element={<OrgTeams teams={org.teams} />} />
-                    <Route path="settings/*" element={
-                        <OrgSettingsLayout org={org}>
-                            <Routes>
-                                <Route index element={<Navigate to="general" replace />} />
-                                <Route path="general" element={<OrgGeneralSettings org={org} />} />
-                                <Route path="authentication" element={<OrgAuthenticationSecurity />} />
-                                <Route path="environments" element={<OrgEnvironments />} />
-                                <Route path="permissions" element={<OrgPermissions />} />
-                                <Route path="webhooks" element={<OrgWebhooks />} />
-                                <Route path="*" element={<Navigate to="general" replace />} />
-                            </Routes>
-                        </OrgSettingsLayout>
-                    } />
-                    <Route path="*" element={<Navigate to="" replace />} />
-                </Routes>
+            <main className="flex-1 p-8 max-w-[1400px] mx-auto w-full">
+                <Outlet context={{ org }} />
             </main>
         </div>
     );

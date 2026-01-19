@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
@@ -27,15 +27,26 @@ import HomeView from './views/Home';
 import LibraryView from './views/Library';
 import ForgeAIView from './views/ForgeAI';
 import LiveSessions from './views/LiveSessions';
-import CommunityView from './views/Community';
 import AdminRoomView from './views/Admin';
 import PlatformMatrix from './views/PlatformMatrix';
 import ActivityView from './views/ActivityView';
 import RoleGuard from './auth/RoleGuard';
+// FIX: Import CommunityView to resolve 'Cannot find name' error.
+import CommunityView from './views/Community';
 
 // Organization Views
 import OrganizationIndexView from './views/organizations/OrganizationIndexView';
 import OrganizationDetailView from './views/organizations/OrganizationDetailView';
+import OrgOverview from './components/organizations/OrgOverview';
+import OrgRepositories from './components/organizations/OrgRepositories';
+import OrgPeople from './components/organizations/OrgPeople';
+import OrgTeams from './components/organizations/OrgTeams';
+import OrgSettingsLayout from './components/organizations/OrgSettingsLayout';
+import OrgGeneralSettings from './views/organizations/settings/OrgGeneralSettings';
+import OrgAuthenticationSecurity from './views/organizations/settings/OrgAuthenticationSecurity';
+import OrgEnvironments from './views/organizations/settings/OrgEnvironments';
+import OrgPermissions from './views/organizations/settings/OrgPermissions';
+import OrgWebhooks from './views/organizations/settings/OrgWebhooks';
 
 // Settings Sub-views
 import AppearanceSettings from './views/settings/AppearanceSettings';
@@ -51,13 +62,45 @@ import PersonalAccessTokensSettings from './views/settings/PersonalAccessTokensS
 
 // --- NEW HIRING & GROWTH VIEWS ---
 import MarketplaceLayout from './views/marketplace/MarketplaceLayout';
-import HiringLayout from './views/hiring/HiringLayout';
-import GrowthLayout from './views/growth/GrowthLayout';
 import OnboardingLayout from './views/onboarding/OnboardingLayout';
 import WelcomeView from './views/onboarding/WelcomeView';
 import OfferAcceptanceView from './views/trials/OfferAcceptanceView';
 import LivePairingLobbyView from './views/trials/LivePairingLobbyView';
 import TrialSubmittedView from './views/trials/TrialSubmittedView';
+
+// --- Marketplace Sub-views ---
+import MissionsView from './views/marketplace/MissionsView';
+import MissionDetailView from './views/marketplace/MissionDetailView';
+import TrialRepositoriesView from './views/marketplace/TrialRepositoriesView';
+
+// --- Hiring Sub-views ---
+import CandidateDiscoveryView from './views/hiring/CandidateDiscoveryView';
+import CandidateScorecardView from './views/hiring/CandidateScorecardView';
+import CandidateComparisonView from './views/hiring/CandidateComparisonView';
+import OfferEditorView from './views/hiring/OfferEditorView';
+import SessionSchedulerView from './views/hiring/SessionSchedulerView';
+import InterviewerFeedbackView from './views/hiring/InterviewerFeedbackView';
+import AssessmentsView from './views/hiring/AssessmentsView';
+
+// --- Growth Sub-views ---
+import SkillDashboardView from './views/growth/SkillDashboardView';
+import DeveloperProfileView from './views/growth/DeveloperProfileView';
+
+// --- Onboarding Sub-views ---
+import OnboardingWorkspace from './views/onboarding/OnboardingWorkspace';
+import BuddyDashboardView from './views/onboarding/BuddyDashboardView';
+
+// --- Admin Sub-views ---
+import AdminOverview from './components/admin/AdminOverview';
+import UserManager from './components/admin/UserManager';
+import TeamManager from './components/admin/TeamManager';
+import WorkspaceMonitor from './components/admin/WorkspaceMonitor';
+import RepositoryGovernance from './components/admin/RepositoryGovernance';
+import JobOversight from './components/admin/JobOversight';
+import CommunityModeration from './components/admin/CommunityModeration';
+import RoleEditor from './components/admin/RoleEditor';
+import AuditLogs from './components/admin/AuditLogs';
+
 
 const ProtectedApp = () => {
   const [notification, setNotification] = useState<any>(null);
@@ -133,45 +176,87 @@ const ProtectedApp = () => {
             <Route path="/activity" element={<ActivityView />} />
             
             <Route path="/organizations" element={<OrganizationIndexView />} />
-            <Route path="/org/:orgId/*" element={<OrganizationDetailView />} />
+            <Route path="/org/:orgId" element={<OrganizationDetailView />}>
+                <Route index element={<OrgOverview />} />
+                <Route path="repositories" element={<OrgRepositories />} />
+                <Route path="people" element={<OrgPeople />} />
+                <Route path="teams" element={<OrgTeams />} />
+                <Route path="settings" element={<OrgSettingsLayout />}>
+                    <Route index element={<Navigate to="general" replace />} />
+                    <Route path="general" element={<OrgGeneralSettings />} />
+                    <Route path="authentication" element={<OrgAuthenticationSecurity />} />
+                    <Route path="environments" element={<OrgEnvironments />} />
+                    <Route path="permissions" element={<OrgPermissions />} />
+                    <Route path="webhooks" element={<OrgWebhooks />} />
+                    <Route path="*" element={<Navigate to="general" replace />} />
+                </Route>
+                <Route path="*" element={<Navigate to="" replace />} />
+            </Route>
 
-            {/* Renamed Marketplace Route */}
-            <Route path="/marketplace/*" element={<MarketplaceLayout />} />
-            {/* Legacy route for old jobs link */}
+            <Route path="/marketplace" element={<MarketplaceLayout />}>
+                <Route index element={<Navigate to="missions" replace />} />
+                <Route path="missions" element={<MissionsView />} />
+                <Route path="missions/:id" element={<MissionDetailView />} />
+                <Route path="trials" element={<TrialRepositoriesView />} />
+                <Route path="hiring" element={<Navigate to="discovery" replace />} />
+                <Route path="hiring/discovery" element={<CandidateDiscoveryView />} />
+                <Route path="hiring/candidate/:id" element={<CandidateScorecardView />} />
+                <Route path="hiring/compare" element={<CandidateComparisonView />} />
+                <Route path="hiring/offer/:id" element={<OfferEditorView />} />
+                <Route path="hiring/schedule/:id" element={<SessionSchedulerView />} />
+                <Route path="hiring/feedback/:id" element={<InterviewerFeedbackView />} />
+                <Route path="hiring/assessments" element={<AssessmentsView />} />
+                <Route path="growth" element={<Navigate to="dashboard" replace />} />
+                <Route path="growth/dashboard" element={<SkillDashboardView />} />
+                <Route path="growth/profile/:id" element={<DeveloperProfileView />} />
+                <Route path="*" element={<Navigate to="missions" replace />} />
+            </Route>
             <Route path="/dashboard/jobs" element={<Navigate to="/marketplace/missions" replace />} />
             <Route path="/jobs/:id" element={<Navigate to="/marketplace/missions/:id" replace />} />
             
-            {/* New Hiring & Growth Routes */}
-            <Route path="/hiring/*" element={<HiringLayout />} />
-            <Route path="/growth/*" element={<GrowthLayout />} />
-            <Route path="/onboarding/*" element={<OnboardingLayout />} />
+            <Route path="/onboarding" element={<OnboardingLayout />}>
+                <Route index element={<Navigate to="dashboard" replace />} />
+                <Route path="dashboard" element={<OnboardingWorkspace />} />
+                <Route path="buddy" element={<BuddyDashboardView />} />
+                <Route path="*" element={<Navigate to="dashboard" replace />} />
+            </Route>
+
             <Route path="/welcome/:userId" element={<WelcomeView />} />
             <Route path="/offer/:offerId/accept" element={<OfferAcceptanceView />} />
             <Route path="/trials/lobby/:sessionId" element={<LivePairingLobbyView />} />
             <Route path="/trials/submitted/:trialId" element={<TrialSubmittedView />} />
 
-            <Route path="/settings/*" element={
-              <SettingsLayout>
-                <Routes>
-                  <Route index element={<Navigate to="profile" replace />} />
-                  <Route path="profile" element={<ProfileSettings />} />
-                  <Route path="account" element={<AccountSettings />} />
-                  <Route path="appearance" element={<AppearanceSettings />} />
-                  <Route path="accessibility" element={<AccessibilitySettings />} />
-                  <Route path="notifications" element={<NotificationsSettings />} />
-                  <Route path="security" element={<SecuritySettings />} />
-                  <Route path="emails" element={<EmailSettings />} />
-                  <Route path="billing" element={<BillingSettings />} />
-                  <Route path="forge-ai-usage" element={<ForgeAIUsageSettings />} />
-                  <Route path="tokens" element={<PersonalAccessTokensSettings />} />
-                  <Route path="*" element={<Navigate to="profile" replace />} />
-                </Routes>
-              </SettingsLayout>
-            } />
+            <Route path="/settings" element={<SettingsLayout />}>
+                <Route index element={<Navigate to="profile" replace />} />
+                <Route path="profile" element={<ProfileSettings />} />
+                <Route path="account" element={<AccountSettings />} />
+                <Route path="appearance" element={<AppearanceSettings />} />
+                <Route path="accessibility" element={<AccessibilitySettings />} />
+                <Route path="notifications" element={<NotificationsSettings />} />
+                <Route path="security" element={<SecuritySettings />} />
+                <Route path="emails" element={<EmailSettings />} />
+                <Route path="billing" element={<BillingSettings />} />
+                <Route path="forge-ai-usage" element={<ForgeAIUsageSettings />} />
+                <Route path="tokens" element={<PersonalAccessTokensSettings />} />
+                <Route path="*" element={<Navigate to="profile" replace />} />
+            </Route>
 
             <Route path="/forge-ai" element={<ForgeAIView />} />
             <Route path="/live-sessions" element={<LiveSessions />} />
-            <Route path="/admin/*" element={<RoleGuard><AdminRoomView /></RoleGuard>} />
+
+            <Route path="/admin" element={<RoleGuard><AdminRoomView /></RoleGuard>}>
+                <Route index element={<AdminOverview />} />
+                <Route path="users" element={<UserManager />} />
+                <Route path="teams" element={<TeamManager />} />
+                <Route path="workspaces" element={<WorkspaceMonitor />} />
+                <Route path="repositories" element={<RepositoryGovernance />} />
+                <Route path="jobs" element={<JobOversight />} />
+                <Route path="community" element={<CommunityModeration />} />
+                <Route path="roles" element={<RoleEditor />} />
+                <Route path="audit-logs" element={<AuditLogs />} />
+                <Route path="*" element={<Navigate to="/admin" replace />} />
+            </Route>
+            
             <Route path="*" element={<Navigate to="/dashboard/home" />} />
           </Routes>
         </main>
@@ -213,11 +298,11 @@ const AppContent = () => {
 
 const App = () => (
   <ThemeProvider>
-    <HashRouter>
+    <BrowserRouter>
       <AuthProvider>
         <AppContent />
       </AuthProvider>
-    </HashRouter>
+    </BrowserRouter>
   </ThemeProvider>
 );
 

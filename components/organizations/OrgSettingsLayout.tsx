@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink, useParams } from 'react-router-dom';
+import { NavLink, useParams, Outlet, useOutletContext } from 'react-router-dom';
 import { Organization } from '../../types';
 
 const SettingsNavItem = ({ to, label, icon }: { to: string; label: string; icon: string }) => (
@@ -18,13 +18,14 @@ const SettingsNavItem = ({ to, label, icon }: { to: string; label: string; icon:
   </NavLink>
 );
 
-const OrgSettingsLayout: React.FC<{ children: React.ReactNode, org: Organization }> = ({ children, org }) => {
+const OrgSettingsLayout: React.FC = () => {
+  const { org } = useOutletContext<{ org: Organization }>();
   const { orgId } = useParams();
   const basePath = `/org/${orgId}/settings`;
 
   return (
     <div className="flex-1 flex bg-gh-bg font-display">
-      <div className="max-w-[1400px] w-full mx-auto flex p-8 gap-8">
+      <div className="max-w-[1400px] w-full mx-auto flex gap-8">
         {/* Settings Sidebar */}
         <aside className="w-[240px] shrink-0 space-y-8">
           <div className="flex items-center gap-3 px-3">
@@ -57,7 +58,7 @@ const OrgSettingsLayout: React.FC<{ children: React.ReactNode, org: Organization
         {/* Dynamic Content Area */}
         <main className="flex-1 min-w-0">
           <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-            {children}
+            <Outlet context={{ org }} />
           </div>
         </main>
       </div>

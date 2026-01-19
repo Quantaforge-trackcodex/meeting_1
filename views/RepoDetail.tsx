@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { MOCK_REPOS } from '../constants';
@@ -143,6 +144,17 @@ const RepoDetailView = () => {
   const [isCodeOpen, setIsCodeOpen] = useState(false);
   const [isStarred, setIsStarred] = useState(false);
   const [watchStatus, setWatchStatus] = useState('Watch');
+
+  const renderMarkdown = (text: string) => {
+    if (!text) return '';
+    return text
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/__(.*?)__/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(/_(.*?)_/g, '<em>$1</em>')
+      .replace(/`([^`]+)`/g, '<code class="bg-black/20 px-1.5 py-0.5 rounded text-xs font-mono text-amber-400">$1</code>')
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">$1</a>');
+  };
 
   const tabs = [
     { name: 'Code', icon: 'code' },
@@ -443,29 +455,23 @@ const RepoDetailView = () => {
                             </div>
                             <div className="divide-y divide-[#30363d]">
                                {workflowRuns.map(run => (
-                                 <div key={run.id} className="p-4 hover:bg-[#161b22] cursor-pointer group flex items-start sm:items-center justify-between gap-4 transition-colors">
-                                    <div className="flex items-start gap-4 flex-1 min-w-0">
-                                       <div className="mt-1 sm:mt-0">
-                                          {run.status === 'Success' && <span className="material-symbols-outlined text-[#3fb950] !text-[20px] filled">check_circle</span>}
-                                          {run.status === 'Failure' && <span className="material-symbols-outlined text-[#f85149] !text-[20px] filled">cancel</span>}
-                                          {run.status === 'Running' && <span className="material-symbols-outlined text-[#d29922] !text-[20px] animate-spin">progress_activity</span>}
-                                       </div>
-                                       <div className="min-w-0 flex-1">
-                                          <div className="flex flex-wrap items-center gap-x-2">
-                                             <h4 className="text-sm font-bold text-[#f0f6fc] group-hover:text-[#58a6ff] truncate">{run.msg}</h4>
-                                             <span className="text-[11px] text-[#8b949e] font-mono px-1.5 py-0.5 bg-[#21262d] rounded"># {run.id}</span>
-                                          </div>
-                                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-[11px] text-[#8b949e]">
-                                             <span className="font-bold text-slate-300 uppercase tracking-tight">{run.workflow}</span>
-                                             <span className="flex items-center gap-1"><span className="material-symbols-outlined !text-[14px]">account_tree</span> {run.branch}</span>
-                                             <span className="flex items-center gap-1"><img src={`https://picsum.photos/seed/${run.author}/32`} className="size-3.5 rounded-full" /> {run.author}</span>
-                                          </div>
+                                 <div key={run.id} className="p-4 hover:bg-[#161b22] group flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                       <span className={`material-symbols-outlined !text-[20px] ${
+                                         run.status === 'Success' ? 'text-emerald-500' :
+                                         run.status === 'Failure' ? 'text-rose-500' : 'text-amber-500 animate-spin'
+                                       }`}>{
+                                         run.status === 'Success' ? 'check_circle' :
+                                         run.status === 'Failure' ? 'cancel' : 'progress_activity'
+                                       }</span>
+                                       <div className="flex flex-col">
+                                          <p className="text-sm font-bold text-[#f0f6fc] group-hover:text-primary">{run.msg}</p>
+                                          <p className="text-xs text-[#8b949e] mt-1">
+                                             <span className="font-bold">{run.author}</span> triggered <span className="font-bold">{run.workflow}</span> on branch <span className="font-mono text-primary bg-primary/10 px-1 rounded">{run.branch}</span>
+                                          </p>
                                        </div>
                                     </div>
-                                    <div className="text-right flex flex-col items-end gap-1">
-                                       <span className="text-[11px] text-[#8b949e]">{run.time}</span>
-                                       <span className="material-symbols-outlined text-slate-600 !text-[18px] opacity-0 group-hover:opacity-100 transition-opacity">more_vert</span>
-                                    </div>
+                                    <span className="text-xs text-[#8b949e]">{run.time}</span>
                                  </div>
                                ))}
                             </div>
@@ -474,127 +480,67 @@ const RepoDetailView = () => {
                    </div>
                 </div>
               )}
-
-              {activeTab === 'Insights' && (
-                <div className="space-y-10 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                  <section className="space-y-4">
-                    <div className="flex items-center gap-2 px-1">
-                      <span className="material-symbols-outlined text-emerald-500 filled !text-[20px]">calendar_month</span>
-                      <h3 className="text-sm font-black text-slate-100 uppercase tracking-widest">Repository Activity Heatmap</h3>
-                    </div>
-                    <div className="p-8 bg-[#161b22] border border-[#30363d] rounded-2xl shadow-xl overflow-hidden group hover:border-[#8b949e] transition-all">
-                      <ContributionHeatmap />
-                    </div>
-                  </section>
-
-                  <section className="space-y-4">
-                    <div className="flex items-center gap-2 px-1">
-                      <span className="material-symbols-outlined text-primary !text-[20px]">query_stats</span>
-                      <h3 className="text-sm font-black text-slate-100 uppercase tracking-widest">Commit Frequency (2024)</h3>
-                    </div>
-                    <div className="bg-[#161b22] border border-[#30363d] rounded-2xl p-8 shadow-xl group hover:border-primary/30 transition-all">
-                      <div className="h-[280px] w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <AreaChart data={commitHistoryData}>
-                            <defs>
-                              <linearGradient id="colorCommits" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="#58a6ff" stopOpacity={0.3}/>
-                                <stop offset="95%" stopColor="#58a6ff" stopOpacity={0}/>
-                              </linearGradient>
-                            </defs>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#30363d" vertical={false} />
-                            <XAxis dataKey="name" stroke="#8b949e" fontSize={11} tickLine={false} axisLine={false} dy={10} />
-                            <YAxis stroke="#8b949e" fontSize={11} tickLine={false} axisLine={false} dx={-10} />
-                            <Tooltip contentStyle={{ backgroundColor: '#0d1117', border: '1px solid #30363d', borderRadius: '8px', fontSize: '12px', color: '#c9d1d9' }} />
-                            <Area type="monotone" dataKey="commits" stroke="#58a6ff" strokeWidth={3} fillOpacity={1} fill="url(#colorCommits)" animationDuration={1500} />
-                          </AreaChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </div>
-                  </section>
-                </div>
-              )}
-
-              {activeTab === 'Settings' && (
-                <div className="space-y-8 animate-in fade-in duration-300">
-                  <div className="border-b border-[#30363d] pb-4 mb-4">
-                     <h2 className="text-xl font-bold text-white">General Settings</h2>
-                  </div>
-                  <div className="space-y-6">
-                     <section>
-                        <h3 className="text-sm font-bold text-white mb-2">Repository name</h3>
-                        <div className="flex gap-2">
-                           <input defaultValue={repo.name} className="bg-[#0d1117] border border-[#30363d] rounded-md px-3 py-1.5 text-sm text-white w-96 outline-none focus:ring-1 focus:ring-primary" />
-                           <button className="px-4 py-1.5 bg-[#21262d] border border-[#30363d] text-white text-xs font-bold rounded hover:bg-[#30363d]">Rename</button>
-                        </div>
-                     </section>
-                     <div className="h-px bg-[#30363d]"></div>
-                     <section>
-                        <h3 className="text-sm font-bold text-[#f85149] mb-2">Danger Zone</h3>
-                        <div className="border border-[#f85149]/30 rounded-lg overflow-hidden">
-                           <div className="p-4 flex items-center justify-between border-b border-[#30363d]">
-                              <div>
-                                 <p className="text-sm font-bold text-white">Archive this repository</p>
-                                 <p className="text-xs text-[#8b949e]">Mark this repository as read-only.</p>
-                              </div>
-                              <button className="px-3 py-1.5 bg-[#21262d] border border-[#30363d] text-[#f85149] text-xs font-bold rounded hover:bg-[#f85149] hover:text-white transition-all">Archive</button>
-                           </div>
-                        </div>
-                     </section>
-                  </div>
-                </div>
-              )}
            </div>
 
-           <div className="space-y-10">
+           <aside className="min-w-0 space-y-6 animate-in fade-in duration-300">
               <section>
-                 <h3 className="text-sm font-bold text-slate-100 mb-3 hover:text-primary cursor-pointer transition-colors flex items-center justify-between">
-                    About
-                    <span className="material-symbols-outlined !text-[18px] text-slate-500 hover:text-white">settings</span>
-                 </h3>
-                 <p className="text-sm text-slate-400 leading-relaxed mb-4">
-                    {repo.description}
-                 </p>
-                 <div className="space-y-3">
-                    <div className="flex items-center gap-2 text-sm text-slate-400 hover:text-[#58a6ff] cursor-pointer">
-                       <span className="material-symbols-outlined !text-[18px]">link</span>
-                       <span className="font-bold underline truncate">trackcodex.dev/docs/core</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-slate-400">
-                       <span className="material-symbols-outlined !text-[18px]">star</span>
-                       <span className="font-bold text-slate-200">{repo.stars}</span> stars
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-slate-400">
-                       <span className="material-symbols-outlined !text-[18px]">fork_right</span>
-                       <span className="font-bold text-slate-200">{repo.forks}</span> forks
-                    </div>
+                 <h3 className="text-sm font-bold text-slate-100 mb-2">About</h3>
+                 <div
+                    className="text-sm text-slate-400 leading-relaxed mb-4 prose prose-sm prose-invert max-w-none"
+                    dangerouslySetInnerHTML={{ __html: renderMarkdown(repo.description) }}
+                  />
+                 <div className="flex flex-wrap gap-2">
+                    {['security', 'api', 'go', 'audited'].map(tag => (
+                      <span key={tag} className="px-2 py-0.5 bg-primary/10 text-primary text-[11px] font-medium rounded-full cursor-pointer hover:bg-primary/20">
+                         #{tag}
+                      </span>
+                    ))}
                  </div>
               </section>
 
               <section className="pt-6 border-t border-[#30363d]">
-                 <h3 className="text-sm font-bold text-slate-100 mb-3 uppercase tracking-tight">Repo Ecosystem</h3>
-                 <div className="space-y-4">
-                    <div className="flex items-center justify-between group cursor-help">
-                       <span className="text-xs text-slate-400 font-bold">ForgeAI Health</span>
-                       <span className="text-xs font-black text-[#3fb950] bg-[#3fb950]/10 px-2 py-0.5 rounded border border-[#3fb950]/20 group-hover:scale-110 transition-transform">{repo.aiHealth}</span>
-                    </div>
-                 </div>
+                <h3 className="text-sm font-bold text-slate-100 mb-4">Releases <span className="ml-2 px-2 py-0.5 rounded-full bg-[#30363d] text-[10px] font-bold text-[#f0f6fc]">12</span></h3>
+                <div className="p-4 bg-[#0d1117] border border-[#30363d] rounded-lg flex items-center justify-between group cursor-pointer">
+                   <div>
+                      <div className="flex items-center gap-2">
+                        <span className="material-symbols-outlined text-emerald-500 !text-[16px]">verified</span>
+                        <span className="text-sm font-bold text-white group-hover:text-primary">v2.4.0</span>
+                        <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 text-[9px] font-bold uppercase">Latest</span>
+                      </div>
+                      <p className="text-xs text-[#8b949e] mt-1">Published 2 days ago</p>
+                   </div>
+                   <span className="material-symbols-outlined text-[#8b949e] group-hover:text-white !text-[18px]">chevron_right</span>
+                </div>
               </section>
 
               <section className="pt-6 border-t border-[#30363d]">
-                 <h3 className="text-sm font-bold text-slate-100 mb-3">Languages</h3>
-                 <div className="h-2 w-full rounded-full flex overflow-hidden mb-4">
-                    <div className="bg-[#3178c6] h-full" style={{ width: '85%' }}></div>
-                    <div className="bg-[#f1e05a] h-full" style={{ width: '10%' }}></div>
+                <h3 className="text-sm font-bold text-slate-100 mb-4">Contributors <span className="ml-2 px-2 py-0.5 rounded-full bg-[#30363d] text-[10px] font-bold text-[#f0f6fc]">{repo.contributors?.length || 0}</span></h3>
+                <div className="flex -space-x-2">
+                   {repo.contributors?.map((c, i) => (
+                     <img key={i} src={c} className="size-8 rounded-full border-2 border-[#161b22] hover:z-10 hover:scale-110 transition-transform" />
+                   ))}
+                </div>
+              </section>
+
+              <section className="pt-6 border-t border-[#30363d]">
+                 <h3 className="text-sm font-bold text-slate-100 mb-4">Languages</h3>
+                 <div className="w-full h-2 bg-[#30363d] rounded-full flex overflow-hidden mb-4">
+                    {repo.languages?.map(lang => (
+                      <div key={lang.name} style={{ width: `${lang.percentage}%`, backgroundColor: lang.color }} title={`${lang.name}: ${lang.percentage}%`}></div>
+                    ))}
                  </div>
-                 <div className="grid grid-cols-2 gap-y-2">
-                    <div className="flex items-center gap-2">
-                       <div className="size-2 rounded-full bg-[#3178c6]"></div>
-                       <span className="text-[11px] font-bold text-[#f0f6fc]">TypeScript</span>
-                    </div>
+                 <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
+                    {repo.languages?.map(lang => (
+                      <div key={lang.name} className="flex items-center gap-2">
+                         <div className="size-2.5 rounded-full" style={{ backgroundColor: lang.color }}></div>
+                         <span className="text-white font-bold">{lang.name}</span>
+                         <span className="text-[#8b949e]">{lang.percentage}%</span>
+                      </div>
+                    ))}
                  </div>
               </section>
-           </div>
+
+           </aside>
         </div>
       </div>
     </div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, Outlet } from 'react-router-dom';
 
 const SettingsSidebarItem = ({ to, label, icon }: { to: string; label: string; icon: string }) => (
   <NavLink
@@ -17,7 +17,9 @@ const SettingsSidebarItem = ({ to, label, icon }: { to: string; label: string; i
   </NavLink>
 );
 
-const SettingsLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+// FIX: Removed the 'children' prop as this component uses react-router's <Outlet /> to render nested routes,
+// and it's used as a layout route element without children being passed directly.
+const SettingsLayout: React.FC = () => {
   return (
     <div className="flex-1 flex flex-col bg-gh-bg font-display overflow-hidden">
       <div className="max-w-[1200px] w-full mx-auto flex flex-col lg:flex-row min-h-0 h-full p-8 gap-8">
@@ -62,7 +64,7 @@ const SettingsLayout: React.FC<{ children: React.ReactNode }> = ({ children }) =
         {/* Dynamic Content Area */}
         <main className="flex-1 min-w-0 overflow-y-auto custom-scrollbar pr-4 pb-20">
           <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-            {children}
+            <Outlet />
           </div>
         </main>
       </div>

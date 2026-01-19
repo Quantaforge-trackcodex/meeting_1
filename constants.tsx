@@ -4,7 +4,7 @@ export const MOCK_REPOS: Repository[] = [
   {
     id: 'trackcodex-backend',
     name: 'trackcodex-backend',
-    description: 'Core API service for the TrackCodex platform handling user authentication, repository indexing, and AI analysis queuing.',
+    description: 'Core API service for the **TrackCodex** platform handling `user authentication`, repository indexing, and AI analysis queuing. Check out the [API docs](#/repo/trackcodex-backend).',
     isPublic: false,
     visibility: 'PRIVATE',
     techStack: 'Go',
@@ -29,7 +29,7 @@ export const MOCK_REPOS: Repository[] = [
   {
     id: 'dashboard-ui',
     name: 'dashboard-ui',
-    description: 'React-based frontend for the main dashboard including all charting components, collaborative tools, and AI insights.',
+    description: '*React-based* frontend for the main dashboard including all charting components, collaborative tools, and `AI insights`.',
     isPublic: true,
     visibility: 'PUBLIC',
     techStack: 'TypeScript',
@@ -44,7 +44,7 @@ export const MOCK_REPOS: Repository[] = [
   {
     id: 'documentation-site',
     name: 'documentation-site',
-    description: 'Public facing documentation built with Docusaurus. Contains guides, API reference, and platform architecture docs.',
+    description: 'Public facing documentation built with _Docusaurus_. Contains guides, [API reference](#), and platform architecture docs.',
     isPublic: true,
     visibility: 'PUBLIC',
     techStack: 'Markdown',

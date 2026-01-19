@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink, Routes, Route, Navigate } from 'react-router-dom';
+import { NavLink, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import OnboardingWorkspace from './OnboardingWorkspace';
 import BuddyDashboardView from './BuddyDashboardView';
 
@@ -45,12 +45,7 @@ const OnboardingLayout = () => {
                  </div>
             </aside>
             <main className="flex-1 overflow-y-auto custom-scrollbar p-8 bg-gh-bg">
-                <Routes>
-                    <Route index element={<Navigate to="dashboard" replace />} />
-                    <Route path="dashboard" element={<OnboardingWorkspace />} />
-                    <Route path="buddy" element={<BuddyDashboardView />} />
-                    <Route path="*" element={<Navigate to="dashboard" replace />} />
-                </Routes>
+                <Outlet />
             </main>
         </div>
     );

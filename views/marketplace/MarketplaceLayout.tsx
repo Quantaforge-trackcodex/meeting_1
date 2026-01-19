@@ -1,13 +1,25 @@
 import React from 'react';
-import { NavLink, Routes, Route, Navigate } from 'react-router-dom';
+import { NavLink, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import MissionsView from './MissionsView';
 import MissionDetailView from './MissionDetailView';
 import TrialRepositoriesView from './TrialRepositoriesView';
 
+// --- Merged Views ---
+import CandidateDiscoveryView from '../hiring/CandidateDiscoveryView';
+import CandidateScorecardView from '../hiring/CandidateScorecardView';
+import CandidateComparisonView from '../hiring/CandidateComparisonView';
+import OfferEditorView from '../hiring/OfferEditorView';
+import SessionSchedulerView from '../hiring/SessionSchedulerView';
+import InterviewerFeedbackView from '../hiring/InterviewerFeedbackView';
+import AssessmentsView from '../hiring/AssessmentsView';
+import SkillDashboardView from '../growth/SkillDashboardView';
+import DeveloperProfileView from '../growth/DeveloperProfileView';
+
+
 const MarketplaceTab = ({ to, label, icon }: { to: string, label: string, icon: string }) => (
     <NavLink
         to={to}
-        end
+        end={false} // Allow nested routes to keep the tab active
         className={({ isActive }) =>
             `flex items-center gap-3 px-4 py-2 rounded-lg text-sm font-bold transition-all ${
                 isActive ? 'bg-primary text-white shadow-lg' : 'text-slate-400 hover:bg-white/5 hover:text-white'
@@ -35,17 +47,13 @@ const MarketplaceLayout = () => {
                     <nav className="mt-8 flex items-center gap-2 p-2 bg-gh-bg-secondary border border-gh-border rounded-xl w-fit">
                         <MarketplaceTab to="/marketplace/missions" label="Missions" icon="work" />
                         <MarketplaceTab to="/marketplace/trials" label="Trial Repositories" icon="rule" />
+                        <MarketplaceTab to="/marketplace/hiring" label="Hiring" icon="person_search" />
+                        <MarketplaceTab to="/marketplace/growth" label="Growth" icon="trending_up" />
                     </nav>
                 </div>
             </header>
             <main className="flex-1 overflow-y-auto custom-scrollbar">
-                 <Routes>
-                    <Route index element={<Navigate to="missions" replace />} />
-                    <Route path="missions" element={<MissionsView />} />
-                    <Route path="missions/:id" element={<MissionDetailView />} />
-                    <Route path="trials" element={<TrialRepositoriesView />} />
-                    <Route path="*" element={<Navigate to="missions" replace />} />
-                </Routes>
+                 <Outlet />
             </main>
         </div>
     );

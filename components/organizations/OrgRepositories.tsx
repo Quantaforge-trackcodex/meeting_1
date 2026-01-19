@@ -1,9 +1,12 @@
 import React from 'react';
-import { Repository } from '../../types';
-import { useNavigate } from 'react-router-dom';
+import { Repository, Organization } from '../../types';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 
-const OrgRepositories = ({ repos }: { repos: Repository[] }) => {
+const OrgRepositories = () => {
+    const { org } = useOutletContext<{ org: Organization }>();
+    const repos = org.repositories;
     const navigate = useNavigate();
+    
     return (
         <div className="animate-in fade-in duration-500">
             <div className="flex items-center justify-between mb-6">

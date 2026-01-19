@@ -1,7 +1,11 @@
 import React from 'react';
-import { Team } from '../../types';
+import { Team, Organization } from '../../types';
+import { useOutletContext } from 'react-router-dom';
 
-const OrgTeams = ({ teams }: { teams: Team[] }) => {
+const OrgTeams = () => {
+    const { org } = useOutletContext<{ org: Organization }>();
+    const teams = org.teams;
+    
     return (
         <div className="animate-in fade-in duration-500">
             <div className="flex items-center justify-between mb-6">

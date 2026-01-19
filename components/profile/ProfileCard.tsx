@@ -1,172 +1,24 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { profileService, UserProfile, TechStatus } from '../../services/profile';
-import { directMessageBus } from '../../services/directMessageBus';
+import React, { useState, useEffect } from 'react';
+import { profileService, UserProfile } from '../../services/profile';
 import OfferJobModal from '../jobs/offer/OfferJobModal';
-import { useAuth } from '../../context/AuthContext';
-import { MOCK_ORGANIZATIONS } from '../../constants';
-import { useNavigate } from 'react-router-dom';
-
-const PRESET_STATUSES = [
-  { emoji: '🚀', text: 'Scaling core-api shards' },
-  { emoji: '🛡️', text: 'Hardening security protocols' },
-  { emoji: '🤖', text: 'Training ForgeAI weights' },
-  { emoji: '⚡', text: 'Optimizing hot paths' },
-  { emoji: '🔍', text: 'Hunting memory leaks' },
-  { emoji: '🏗️', text: 'Refactoring architecture' },
-];
-
-const TechStatusEditor = ({ current, onSave, onCancel }: { current?: TechStatus, onSave: (s: TechStatus | null) => void, onCancel: () => void }) => {
-  const [emoji, setEmoji] = useState(current?.emoji || '💬');
-  const [text, setText] = useState(current?.text || '');
-  const [expiry, setExpiry] = useState<string>('never');
-  const modalRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
-        onCancel();
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [onCancel]);
-
-  const handleSave = () => {
-    if (!text.trim()) {
-      onSave(null);
-      return;
-    }
-    let expiresAt: number | undefined;
-    if (expiry === '1h') expiresAt = Date.now() + 3600000;
-    if (expiry === '1d') expiresAt = Date.now() + 86400000;
-    
-    onSave({ emoji, text: text.trim(), expiresAt });
-  };
-
-  return (
-    <div className="absolute top-0 left-0 w-full z-[200] animate-in fade-in zoom-in-95 duration-200">
-      <div ref={modalRef} className="bg-[#161b22] border border-primary/40 rounded-2xl p-5 shadow-[0_20px_50px_rgba(0,0,0,0.6)] ring-1 ring-white/5">
-        <div className="flex items-center justify-between mb-4">
-           <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Update Tech Status</h4>
-           <button onClick={onCancel} className="text-slate-600 hover:text-white transition-colors">
-              <span className="material-symbols-outlined !text-[18px]">close</span>
-           </button>
-        </div>
-
-        <div className="flex gap-2 mb-4 bg-[#0d1117] p-2 rounded-xl border border-[#30363d]">
-          <div className="size-10 bg-[#161b22] rounded-lg flex items-center justify-center text-xl shrink-0 border border-white/5">
-            {emoji}
-          </div>
-          <input 
-            autoFocus
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder="What's your current focus?"
-            className="flex-1 bg-transparent border-none text-sm text-slate-200 focus:ring-0 outline-none placeholder:text-slate-600"
-            onKeyDown={(e) => e.key === 'Enter' && handleSave()}
-          />
-        </div>
-
-        <div className="mb-4">
-           <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-2 px-1">Presets</p>
-           <div className="grid grid-cols-2 gap-2">
-              {PRESET_STATUSES.map(p => (
-                <button 
-                  key={p.text}
-                  onClick={() => { setEmoji(p.emoji); setText(p.text); }}
-                  className="flex items-center gap-2 px-2 py-1.5 bg-[#0d1117] border border-[#30363d] hover:border-primary/50 rounded-lg text-left transition-all group"
-                >
-                   <span className="text-sm">{p.emoji}</span>
-                   <span className="text-[10px] font-bold text-slate-400 group-hover:text-slate-200 truncate">{p.text}</span>
-                </button>
-              ))}
-           </div>
-        </div>
-
-        <div className="flex items-center justify-between mb-5 px-1">
-           <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined !text-[16px] text-slate-500">schedule</span>
-              <span className="text-[10px] font-bold text-slate-500 uppercase">Clear after</span>
-           </div>
-           <select 
-              value={expiry} 
-              onChange={(e) => setExpiry(e.target.value)}
-              className="bg-[#0d1117] border border-[#30363d] rounded-lg px-2 py-1 text-[11px] text-slate-300 outline-none focus:ring-1 focus:ring-primary"
-           >
-              <option value="never">Never</option>
-              <option value="1h">1 Hour</option>
-              <option value="1d">1 Day</option>
-           </select>
-        </div>
-
-        <div className="flex gap-2">
-           <button 
-             onClick={handleSave} 
-             className="flex-1 py-2.5 bg-primary hover:bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-primary/20 active:scale-95"
-           >
-             Set Status
-           </button>
-           {current && (
-             <button 
-               onClick={() => onSave(null)} 
-               className="px-4 py-2.5 bg-rose-500/10 border border-rose-500/20 text-rose-500 hover:bg-rose-500 hover:text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95"
-             >
-               Clear
-             </button>
-           )}
-        </div>
-      </div>
-    </div>
-  );
-};
+import { directMessageBus } from '../../services/directMessageBus';
 
 const ProfileCard = () => {
-  const { logout } = useAuth();
   const [profile, setProfile] = useState<UserProfile>(profileService.getProfile());
-  const [isOfferModalOpen, setIsOfferModalOpen] = useState(false);
-  const [isEditingStatus, setIsEditingStatus] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const navigate = useNavigate();
-  
   const [isFollowing, setIsFollowing] = useState(false);
-  const [followerCount, setFollowerCount] = useState(profile.followers);
-
-  const userOrgs = MOCK_ORGANIZATIONS.filter(org => 
-    org.members.some(member => member.username === profile.username)
-  );
+  const [isOfferModalOpen, setIsOfferModalOpen] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = profileService.subscribe(updatedProfile => {
-      setProfile(updatedProfile);
-      // Let's not update followerCount here to keep the local toggle state
-    });
-    setFollowerCount(profile.followers);
+    const unsubscribe = profileService.subscribe(setProfile);
     return unsubscribe;
   }, []);
 
   const handleFollow = () => {
-    if (isFollowing) {
-      setFollowerCount(prev => prev - 1);
-    } else {
-      setFollowerCount(prev => prev + 1);
-    }
     setIsFollowing(prev => !prev);
   };
 
-  const handleStatusSave = (newStatus: TechStatus | null) => {
-    profileService.updateProfile({ techStatus: newStatus || undefined });
-    setIsEditingStatus(false);
-  };
-
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        profileService.updateProfile({ avatar: reader.result as string });
-      };
-      reader.readAsDataURL(file);
-    }
+  const handleOffer = () => {
+    setIsOfferModalOpen(true);
   };
 
   const handleMessage = () => {
@@ -174,162 +26,100 @@ const ProfileCard = () => {
       id: profile.username,
       name: profile.name,
       avatar: profile.avatar,
-      context: "Direct collaboration inquiry"
+      context: 'From their profile'
     });
   };
 
   return (
-    <div className="font-display group/sidebar relative">
-      {/* Avatar Section */}
-      <div className="aspect-square w-full rounded-full border-4 border-[#30363d] overflow-hidden mb-8 shadow-2xl relative group/avatar cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-        <img src={profile.avatar} className="size-full object-cover group-hover/avatar:scale-105 transition-transform duration-700" alt={profile.name} />
-        
-        <div className="absolute bottom-8 right-8 size-5 bg-emerald-500 rounded-full border-4 border-[#0d1117] shadow-[0_0_15px_rgba(16,185,129,0.8)] z-20"></div>
-
-        {profile.techStatus && (
-           <div 
-            onClick={(e) => { e.stopPropagation(); setIsEditingStatus(true); }}
-            className="absolute top-6 left-6 size-10 rounded-2xl bg-[#0d1117]/80 backdrop-blur-md border border-primary/40 flex items-center justify-center text-xl shadow-2xl animate-in zoom-in duration-300 hover:scale-110 transition-transform z-30"
-            title={profile.techStatus.text}
-           >
-              {profile.techStatus.emoji}
-           </div>
-        )}
-
-        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity">
-           <span className="material-symbols-outlined text-white !text-4xl">photo_camera</span>
-        </div>
-        <input type="file" ref={fileInputRef} onChange={handleAvatarChange} className="hidden" accept="image/*" />
-      </div>
-
-      {/* Identity Info */}
-      <div className="mb-6 px-1 relative">
-        {isEditingStatus && (
-          <TechStatusEditor 
-            current={profile.techStatus} 
-            onSave={handleStatusSave} 
-            onCancel={() => setIsEditingStatus(false)} 
-          />
-        )}
-        
-        <h1 className="text-[34px] font-black text-white leading-tight tracking-tight uppercase">{profile.name}</h1>
-        <p className="text-[20px] text-slate-500 font-medium mb-5">@{profile.username}</p>
-
-        {profile.techStatus ? (
-          <div className="group/status mb-8 relative w-fit">
-            <div onClick={() => setIsEditingStatus(true)} className="flex items-center gap-2.5 px-4 py-2 bg-[#0d1117] border-2 border-[#135bec]/40 rounded-2xl hover:border-primary transition-all cursor-pointer shadow-lg">
-              <span className="text-lg">{profile.techStatus.emoji}</span>
-              <span className="text-[14px] font-bold text-slate-100 truncate max-w-[220px]">{profile.techStatus.text}</span>
-            </div>
-            <button onClick={() => profileService.updateProfile({ techStatus: undefined })} className="absolute -top-2 -right-2 size-5 bg-rose-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover/status:opacity-100 transition-all hover:scale-110 shadow-lg z-10" title="Clear status">
-               <span className="material-symbols-outlined !text-[14px] font-black">close</span>
-            </button>
+    <div className="font-display relative text-gh-text">
+      <div className="relative w-48 h-48 mx-auto mb-6">
+        <img src={profile.avatar} className="size-full rounded-full border-4 border-[#30363d] object-cover" alt={profile.name} />
+        {profile.techStatus && profile.techStatus.emoji && (
+          <div className="absolute bottom-2 right-2 size-10 rounded-full bg-[#161b22] border-2 border-[#30363d] flex items-center justify-center text-xl shadow-lg" title={profile.techStatus.text || 'Online'}>
+            {profile.techStatus.emoji}
           </div>
-        ) : (
-          <button onClick={() => setIsEditingStatus(true)} className="text-[11px] font-black uppercase text-primary tracking-widest hover:underline mb-8 flex items-center gap-2 transition-all hover:translate-x-1">
-            <span className="material-symbols-outlined !text-base">add_circle</span>Set tech status</button>
         )}
-
-        <div className="flex flex-wrap gap-2.5 mb-8">
-          <span className="px-3 py-1.5 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 text-emerald-400 text-[11px] font-black uppercase tracking-[0.05em]">Security-First Dev</span>
-          <span className="px-3 py-1.5 rounded-2xl border border-cyan-400/20 bg-cyan-400/5 text-cyan-400 text-[11px] font-black uppercase tracking-[0.05em]">ForgeAI Power User</span>
-          <span className="px-3 py-1.5 rounded-2xl border border-purple-400/20 bg-purple-400/5 text-purple-400 text-[11px] font-black uppercase tracking-[0.05em]">Mentor</span>
-        </div>
-
-        <div className="flex items-center gap-8 mb-8 px-1">
-           <div className="flex items-baseline gap-2 group cursor-pointer">
-              <span className="text-[18px] font-black text-white group-hover:text-primary transition-colors">{followerCount.toLocaleString()}</span>
-              <span className="text-[11px] text-slate-500 font-black uppercase tracking-widest">followers</span>
-           </div>
-           <div className="flex items-baseline gap-2 group cursor-pointer">
-              <span className="text-[18px] font-black text-white group-hover:text-primary transition-colors">{profile.following.toLocaleString()}</span>
-              <span className="text-[11px] text-slate-500 font-black uppercase tracking-widest">following</span>
-           </div>
-        </div>
-
-        <div className="h-px bg-[#30363d] w-full mb-8 opacity-50"></div>
-
-        <p className="text-[16px] text-slate-200 leading-relaxed italic font-medium">{profile.bio}</p>
       </div>
 
-      <div className="flex flex-col gap-3 mb-10">
-        <button 
+      <div className="text-left mb-4">
+        <h1 className="text-2xl font-bold text-white">{profile.name}</h1>
+        <p className="text-lg text-slate-400 -mt-1">{profile.username}</p>
+      </div>
+
+      <div className="flex items-center gap-2 mb-4">
+        <button
           onClick={handleFollow}
-          className={`w-full py-3 rounded-xl font-black uppercase tracking-widest text-[12px] shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2
-            ${isFollowing 
-              ? 'bg-[#21262d] text-slate-200 border border-[#30363d] hover:bg-[#30363d]'
-              : 'bg-primary text-white shadow-primary/20 hover:brightness-110'
-            }`}
+          className={`flex-1 py-2 rounded-lg font-bold text-sm transition-all ${isFollowing ? 'bg-[#21262d] text-slate-200 border border-[#30363d] hover:border-slate-400' : 'bg-primary text-white'}`}
         >
-          <span className="material-symbols-outlined !text-[20px]">{isFollowing ? 'check' : 'add'}</span>
           {isFollowing ? 'Following' : 'Follow'}
         </button>
-        <div className="grid grid-cols-2 gap-3">
-          <button onClick={handleMessage} className="py-3 bg-[#161b22] border border-[#30363d] rounded-xl text-[11px] font-black uppercase tracking-widest text-slate-200 hover:bg-[#21262d] transition-all flex items-center justify-center gap-2 shadow-sm">
-            <span className="material-symbols-outlined !text-[18px]">forum</span>Message</button>
-          <button onClick={() => setIsOfferModalOpen(true)} className="py-3 bg-[#161b22] border border-[#30363d] rounded-xl text-[11px] font-black uppercase tracking-widest text-slate-200 hover:bg-[#21262d] transition-all flex items-center justify-center gap-2 shadow-sm">
-            <span className="material-symbols-outlined !text-[18px]">work</span>Offer Job</button>
-        </div>
-        <button
-          onClick={logout}
-          className="w-full mt-4 py-3 bg-rose-500/5 border border-rose-500/20 rounded-xl text-[11px] font-black uppercase tracking-widest text-rose-400 hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center gap-2 shadow-sm"
-        >
-          <span className="material-symbols-outlined !text-[18px]">logout</span>
-          Sign Out
+        <button onClick={handleOffer} className="px-4 py-2 bg-[#21262d] text-slate-200 border border-[#30363d] rounded-lg text-xs font-bold hover:border-slate-400 transition-all">
+          Job Offer
+        </button>
+        <button onClick={handleMessage} className="px-4 py-2 bg-[#21262d] text-slate-200 border border-[#30363d] rounded-lg text-xs font-bold hover:border-slate-400 transition-all">
+          Message
         </button>
       </div>
+      
+      <p className="text-base text-slate-300 mb-6">{profile.bio}</p>
 
-      <div className="space-y-4 text-xs text-slate-400 px-1">
-        <div className="flex items-center gap-3">
-          <span className="material-symbols-outlined !text-[18px] text-slate-600">corporate_fare</span>
-          <span className="font-bold text-slate-300">{profile.company}</span>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="material-symbols-outlined !text-[18px] text-slate-600">location_on</span>
-          <span>{profile.location}</span>
-        </div>
-        <div className="flex items-center gap-3 group cursor-pointer w-fit">
-          <span className="material-symbols-outlined !text-[18px] text-slate-600 group-hover:text-primary transition-colors">link</span>
-          <a href={`https://${profile.website}`} target="_blank" rel="noopener noreferrer" className="text-primary font-bold hover:underline">{profile.website}</a>
-        </div>
-        <div className="flex items-center gap-3 pt-2">
-          <span className="material-symbols-outlined !text-[18px] text-amber-500 filled">star</span>
-          <span className="font-black text-slate-200 text-sm">{profile.rating} / 5.0 <span className="font-medium text-slate-600 ml-1">(Freelance Rating)</span></span>
-        </div>
+      <div className="flex items-center gap-4 mb-6 text-sm">
+        <span className="material-symbols-outlined !text-base text-slate-500">group</span>
+        <span className="font-bold text-white">{profile.followers}</span>
+        <span className="text-slate-400">followers</span>
+        <span className="text-slate-400">·</span>
+        <span className="font-bold text-white">{profile.following}</span>
+        <span className="text-slate-400">following</span>
       </div>
 
-      <div className="h-px bg-[#30363d] w-full my-8"></div>
-
-      <div className="px-1">
-        <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-3">
-          <span className="material-symbols-outlined !text-[20px] text-slate-500">corporate_fare</span>
-          Organizations
-        </h3>
-        <div className="space-y-4">
-          {userOrgs.map(org => (
-            <div 
-              key={org.id} 
-              onClick={() => navigate(`/org/${org.id}`)}
-              className="flex items-center gap-3 cursor-pointer group/org"
-            >
-              <img 
-                src={org.avatar} 
-                className="size-9 rounded-md border border-gh-border p-0.5 object-cover" 
-                alt={org.name}
-              />
-              <span className="text-[14px] font-bold text-slate-300 group-hover/org:text-primary transition-colors">
-                {org.name}
-              </span>
-            </div>
-          ))}
-        </div>
+      <div className="space-y-3 text-sm mb-8">
+        {profile.location && (
+          <div className="flex items-center gap-3 text-slate-300">
+            <span className="material-symbols-outlined !text-lg text-slate-500">location_on</span>
+            <span>{profile.location}</span>
+          </div>
+        )}
+        {profile.linkedinUrl && (
+          <a href={`https://linkedin.com/${profile.linkedinUrl}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-slate-300 hover:text-primary">
+            <svg className="size-4 text-slate-500" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+            <span>{profile.linkedinUrl}</span>
+          </a>
+        )}
+        {profile.redditUrl && (
+          <a href={`https://reddit.com/${profile.redditUrl}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-slate-300 hover:text-primary">
+             <svg className="size-4 text-slate-500" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm-3.342 15.341c-.085.085-.188.147-.312.185-.039.013-.08.021-.12.03-.119.027-.243.04-.37.04-.32 0-.632-.124-.868-.361-.237-.236-.361-.548-.361-.868s.124-.632.361-.868c.237-.236.548-.361.868-.361.127 0 .251.013.37.04.04.008.081.017.12.03.124.038.227.1.312.185.085.085.147.188.185.312.013.039.021.08.03.12.027.119.04.243.04.37s-.013.251-.04.37c-.008.04-.017.081-.03.12-.038.124-.1.227-.185.312zm6.733 0c-.085.085-.188.147-.312.185-.039.013-.08.021-.12.03-.119.027-.243.04-.37.04-.32 0-.632-.124-.868-.361-.237-.236-.361-.548-.361-.868s.124-.632.361-.868c.237-.236.548-.361.868-.361.127 0 .251.013.37.04.04.008.081.017.12.03.124.038.227.1.312.185.085.085.147.188.185.312.013.039.021.08.03.12.027.119.04.243.04.37s-.013.251-.04.37c-.008.04-.017.081-.03.12-.038.124-.1.227-.185.312zm-4.75-2.09c.671 0 1.258-.292 1.67-.788.118.252.196.53.196.83 0 1.748-2.31 3.167-5.163 3.167-2.854 0-5.164-1.42-5.164-3.167 0-.3.078-.578.196-.83.412.496 1 .788 1.67.788.084 0 .167-.008.25-.022-1.745-.333-2.91-2.02-2.91-3.957 0-2.227 1.758-4.032 3.93-4.032.553 0 1.074.122 1.543.344.428-.198.892-.31 1.37-.31.564 0 1.103.143 1.57.39.46-.226.974-.356 1.523-.356 2.172 0 3.93 1.805 3.93 4.032 0 1.938-1.165 3.624-2.91 3.957.083.014.166.022.25.022z" /></svg>
+            <span>{profile.redditUrl}</span>
+          </a>
+        )}
       </div>
 
-      <OfferJobModal 
-        isOpen={isOfferModalOpen} 
-        onClose={() => setIsOfferModalOpen(false)} 
-        targetUser={{ name: profile.name, username: profile.username }}
-      />
+      {profile.achievements && profile.achievements.length > 0 && (
+        <section className="mb-6">
+          <h2 className="text-base font-bold text-white mb-4">Achievements</h2>
+          <div className="flex flex-wrap gap-4">
+            {profile.achievements.map((ach, i) => (
+              <div key={i} className="flex items-center gap-2 group" title={ach.name}>
+                <img src={ach.imageUrl} alt={ach.name} className="size-16 group-hover:scale-110 transition-transform" />
+                {ach.count > 1 && (
+                  <span className="text-sm font-bold text-slate-400">x{ach.count}</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <div className="mt-6 pt-6 border-t border-[#30363d]">
+        <button className="text-sm text-slate-500 hover:text-rose-500">Block or Report</button>
+      </div>
+
+      {isOfferModalOpen && (
+        <OfferJobModal 
+          isOpen={isOfferModalOpen} 
+          onClose={() => setIsOfferModalOpen(false)} 
+          targetUser={{ name: profile.name, username: profile.username }}
+        />
+      )}
     </div>
   );
 };

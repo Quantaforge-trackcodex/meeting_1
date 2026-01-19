@@ -1,4 +1,3 @@
-
 import { SystemRole } from '../types';
 import { systemBus } from './systemBus';
 
@@ -15,6 +14,12 @@ export interface TechStatus {
   text: string;
   emoji: string;
   expiresAt?: number; // timestamp
+}
+
+export interface Achievement {
+    name: string;
+    imageUrl: string;
+    count: number;
 }
 
 export interface UserProfile {
@@ -37,25 +42,35 @@ export interface UserProfile {
   skills: { name: string; level: number }[]; // Level 1-100
   receivedReviews: Review[];
   techStatus?: TechStatus;
+  linkedinUrl?: string;
+  redditUrl?: string;
+  achievements?: Achievement[];
 }
 
 const DEFAULT_PROFILE: UserProfile = {
-  name: 'Alex Chen',
-  username: 'alexcoder',
+  name: 'Somraj Lodhi',
+  username: 'Creator',
   avatar: 'https://picsum.photos/seed/alexprofile/600',
-  role: 'Senior Engineer',
+  role: 'CS student & AI engineer',
   systemRole: 'Super Admin',
-  bio: 'Building secure distributed systems with Rust & Go. Exploring the edge of AI-assisted security auditing. 🛡️ 🤖',
-  company: 'TrackCodex Security',
-  location: 'Seattle, WA',
-  website: 'alexchen.security',
+  bio: "CS student & AI engineer who likes to dig into the guts of systems. If it's interesting, I'll probably try to build something with it.",
+  company: 'TrackCodex',
+  location: 'Guwahati, Assam, India',
+  website: 'trackcodex.dev',
   rating: 4.9,
   jobsCompleted: 24,
   ratingCount: 42,
-  followers: 2402,
-  following: 180,
+  followers: 11,
+  following: 2,
   communityKarma: 320,
   postsCount: 12,
+  linkedinUrl: 'in/abhigyan-patwari-81809b261',
+  redditUrl: 'u/DeathShot7777',
+  achievements: [
+    { name: 'Arctic Code Vault Contributor', imageUrl: 'https://github.githubassets.com/images/modules/profile/achievements/arctic-code-vault-contributor-default.png', count: 2 },
+    { name: 'YOLO', imageUrl: 'https://github.githubassets.com/images/modules/profile/achievements/yolo-default.png', count: 1 },
+    { name: 'Starstruck', imageUrl: 'https://github.githubassets.com/images/modules/profile/achievements/starstruck-default.png', count: 2 },
+  ],
   skills: [
     { name: 'Rust', level: 92 },
     { name: 'Go', level: 85 },
@@ -72,8 +87,8 @@ const DEFAULT_PROFILE: UserProfile = {
     }
   ],
   techStatus: {
-    emoji: '🚀',
-    text: 'Scaling the core-api shards'
+    emoji: '😁',
+    text: 'Building cool stuff'
   }
 };
 

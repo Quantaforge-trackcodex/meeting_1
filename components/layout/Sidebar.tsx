@@ -3,6 +3,7 @@ import { useSidebarState } from '../../hooks/useSidebarState';
 import { profileService, UserProfile } from '../../services/profile';
 import SidebarItem from './SidebarItem';
 import { MOCK_ORGANIZATIONS } from '../../constants';
+import { isAdmin as checkIsAdmin } from '../../auth/AccessMatrix';
 
 const OrgSwitcher = ({ isExpanded, profile }: { isExpanded: boolean, profile: UserProfile }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -68,7 +69,7 @@ const Sidebar = () => {
     return profileService.subscribe(setProfile);
   }, []);
 
-  const isAdmin = ['Super Admin', 'Org Admin'].includes(profile.systemRole);
+  const isAdmin = checkIsAdmin(profile.systemRole);
 
   return (
     <aside 
@@ -101,21 +102,10 @@ const Sidebar = () => {
       <div className="flex-1 overflow-y-auto custom-scrollbar py-4 space-y-1">
         <SidebarItem to="/dashboard/home" icon="home" label="Home" isExpanded={isExpanded} />
         <SidebarItem to="/platform-matrix" icon="insights" label="Platform Matrix" isExpanded={isExpanded} />
-        
-        <div className="h-px bg-white/5 my-4 mx-3"></div>
-        <p className={`${isExpanded ? 'px-3' : 'hidden'} text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-3 animate-in fade-in duration-200`}>Develop</p>
         <SidebarItem to="/repositories" icon="account_tree" label="Dashboard" isExpanded={isExpanded} />
         <SidebarItem to="/workspaces" icon="terminal" label="Workspaces" isExpanded={isExpanded} />
         <SidebarItem to="/dashboard/library" icon="auto_stories" label="Library" isExpanded={isExpanded} />
-
-        <div className="h-px bg-white/5 my-4 mx-3"></div>
-        <p className={`${isExpanded ? 'px-3' : 'hidden'} text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-3 animate-in fade-in duration-200`}>Talent</p>
-        <SidebarItem to="/hiring" icon="work" label="Hiring Pipeline" isExpanded={isExpanded} />
         <SidebarItem to="/marketplace" icon="store" label="Marketplace" isExpanded={isExpanded} />
-        <SidebarItem to="/growth" icon="trending_up" label="Growth & Skills" isExpanded={isExpanded} />
-
-        <div className="h-px bg-white/5 my-4 mx-3"></div>
-        <p className={`${isExpanded ? 'px-3' : 'hidden'} text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-3 animate-in fade-in duration-200`}>Connect</p>
         <SidebarItem to="/community" icon="diversity_3" label="Community" isExpanded={isExpanded} />
         <SidebarItem to="/forge-ai" icon="bolt" label="ForgeAI" isExpanded={isExpanded} />
         <SidebarItem to="/profile" icon="account_circle" label="Profile" isExpanded={isExpanded} />

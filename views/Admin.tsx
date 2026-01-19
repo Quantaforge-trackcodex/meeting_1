@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { Routes, Route, NavLink, Navigate, useLocation } from 'react-router-dom';
+import { Routes, Route, NavLink, Navigate, useLocation, Outlet } from 'react-router-dom';
 
 // Admin Sub-modules (implemented below as internal components for concise structure)
 import AdminOverview from '../components/admin/AdminOverview';
@@ -72,18 +71,7 @@ const AdminRoomView = () => {
       {/* Admin Content Area */}
       <main className="flex-1 overflow-y-auto custom-scrollbar p-8">
         <div className="max-w-[1400px] mx-auto">
-          <Routes>
-            <Route index element={<AdminOverview />} />
-            <Route path="users" element={<UserManager />} />
-            <Route path="teams" element={<TeamManager />} />
-            <Route path="workspaces" element={<WorkspaceMonitor />} />
-            <Route path="repositories" element={<RepositoryGovernance />} />
-            <Route path="jobs" element={<JobOversight />} />
-            <Route path="community" element={<CommunityModeration />} />
-            <Route path="roles" element={<RoleEditor />} />
-            <Route path="audit-logs" element={<AuditLogs />} />
-            <Route path="*" element={<Navigate to="/admin" replace />} />
-          </Routes>
+          <Outlet />
         </div>
       </main>
     </div>
