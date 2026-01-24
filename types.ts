@@ -9,7 +9,7 @@ export interface UserRole {
 }
 
 export interface Workspace {
-  id:string;
+  id: string;
   name: string;
   status: 'Running' | 'Stopped';
   runtime: string;
@@ -143,25 +143,35 @@ export interface LibraryCategory {
   count: number;
 }
 
+
+export interface OfferDetails {
+  baseSalary: string;
+  equity: string;
+  signOnBonus: string;
+  startDate: string;
+  reportingManager: string;
+  officeLocation: string;
+  includeRelocation: boolean;
+  customNDA: boolean;
+}
+
 export interface Job {
   id: string;
   title: string;
   description: string;
-  longDescription?: string;
-  budget: string;
-  type: 'Contract' | 'Gig' | 'Full-time';
-  status: 'Open' | 'In Progress' | 'Completed' | 'Pending' | 'Pending Review';
   techStack: string[];
+  budget: string;
+  type: 'Contract' | 'Gig' | 'Full-time' | 'Bounty';
+  status: 'Open' | 'InProgress' | 'Completed' | 'Pending';
   repoId: string;
   creator: {
     name: string;
     avatar: string;
   };
-  rating?: number;
-  feedback?: string;
   postedDate: string;
-  targetUserId?: string; // For direct offers
+  targetUserId?: string;
   personalNote?: string;
+  offerDetails?: OfferDetails; // New field for rich offers
 }
 
 // --- Community Enhancement Types ---
@@ -312,7 +322,7 @@ export interface Candidate {
   codeReplayUrl: string; // for highlights
   prQuality?: number; // for discovery view
   status?: 'Passing' | 'Idle' | 'Archived' | 'Top Match'; // for discovery view
-  
+
   // For Comparison View
   aiComplexityDepth?: 'High Depth' | 'Elite' | 'Standard';
   codeReplayHighlights?: string[];
@@ -362,6 +372,7 @@ export interface TrialRepo {
   coverage: number;
   avgPrReview: string;
   logo: string;
+  repoName?: string;
 }
 
 export interface OnboardingTask {

@@ -5,10 +5,9 @@ const SettingsSidebarItem = ({ to, label, icon }: { to: string; label: string; i
   <NavLink
     to={to}
     className={({ isActive }) =>
-      `flex items-center gap-3 px-3 py-2 rounded-md text-[13px] font-medium transition-all ${
-        isActive 
-          ? 'bg-primary/10 text-white border-l-2 border-primary' 
-          : 'text-gh-text-secondary hover:bg-white/5 hover:text-white'
+      `flex items-center gap-3 px-3 py-2 rounded-md text-[13px] font-medium transition-all ${isActive
+        ? 'bg-primary/10 text-white border-l-2 border-primary'
+        : 'text-gh-text-secondary hover:bg-white/5 hover:text-white'
       }`
     }
   >
@@ -16,6 +15,8 @@ const SettingsSidebarItem = ({ to, label, icon }: { to: string; label: string; i
     {label}
   </NavLink>
 );
+
+import SettingsContextSwitcher from './SettingsContextSwitcher';
 
 // FIX: Removed the 'children' prop as this component uses react-router's <Outlet /> to render nested routes,
 // and it's used as a layout route element without children being passed directly.
@@ -25,6 +26,7 @@ const SettingsLayout: React.FC = () => {
       <div className="max-w-[1200px] w-full mx-auto flex flex-col lg:flex-row min-h-0 h-full p-8 gap-8">
         {/* Settings Navigation */}
         <aside className="w-full lg:w-[260px] shrink-0 space-y-8 overflow-y-auto no-scrollbar pb-8">
+          <SettingsContextSwitcher currentContext="personal" />
           <section>
             <h3 className="px-3 text-[11px] font-black uppercase text-slate-500 tracking-widest mb-3">Personal Settings</h3>
             <nav className="flex flex-col gap-0.5">
@@ -35,7 +37,7 @@ const SettingsLayout: React.FC = () => {
               <SettingsSidebarItem to="/settings/accessibility" label="Accessibility" icon="accessibility" />
             </nav>
           </section>
-          
+
           <section>
             <h3 className="px-3 text-[11px] font-black uppercase text-slate-500 tracking-widest mb-3">Access</h3>
             <nav className="flex flex-col gap-0.5">

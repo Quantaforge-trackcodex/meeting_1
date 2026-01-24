@@ -3,6 +3,7 @@ import { MOCK_REPOS } from '../constants';
 import { useNavigate } from 'react-router-dom';
 import { Repository } from '../types';
 import CreateRepoModal from '../components/repositories/CreateRepoModal';
+import { githubService } from '../services/github';
 
 const AIHealthIndicator = ({ score, label }: { score: string; label: string }) => {
   const getColors = () => {
@@ -11,7 +12,7 @@ const AIHealthIndicator = ({ score, label }: { score: string; label: string }) =
     return { text: 'text-rose-400', border: 'border-rose-500/30', bg: 'bg-rose-500/10' };
   };
   const colors = getColors();
-  
+
   return (
     <div className="flex items-center gap-3">
       <div className={`size-10 rounded-full border-2 ${colors.border} flex items-center justify-center font-black text-xs ${colors.text} ${colors.bg}`}>
@@ -44,16 +45,59 @@ const Repositories = () => {
   const navigate = useNavigate();
   const [filter, setFilter] = useState('All Repos');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  
-  const [repos, setRepos] = useState<Repository[]>(() => {
-    try {
-      const saved = localStorage.getItem('trackcodex_local_repos');
-      return saved ? JSON.parse(saved) : MOCK_REPOS;
-    } catch (e) {
-      console.error("Failed to parse local repos from localStorage", e);
-      return MOCK_REPOS;
-    }
-  });
+
+  const [repos, setRepos] = useState<Repository[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadRepos = async () => {
+      try {
+        // Load local
+        const saved = localStorage.getItem('trackcodex_local_repos');
+        let allRepos = saved ? JSON.parse(saved) : MOCK_REPOS;
+
+        // Load GitHub if token exists
+        const token = localStorage.getItem('trackcodex_github_token');
+        if (token) {
+          try {
+            // This import will be moved to the top level in a separate step
+            const { githubService } = await import('../services/github');
+            const ghRepos = await githubService.getRepos(token);
+            const formattedGhRepos = ghRepos.map((r: any) => ({
+              id: `gh-${r.id}`,
+              name: r.name,
+              description: r.description || 'No description provided.',
+              visibility: r.private ? 'PRIVATE' : 'PUBLIC',
+              isPublic: !r.private,
+              lastUpdated: new Date(r.updated_at).toLocaleDateString(),
+              techStack: r.language || 'Unknown',
+              techColor: r.language === 'TypeScript' ? '#3178c6' : r.language === 'JavaScript' ? '#f1e05a' : '#8b949e',
+              stars: r.stargazers_count,
+              forks: r.forks_count,
+              aiHealth: 'B', // Placeholder
+              aiHealthLabel: 'Analyzing...', // Placeholder
+              securityStatus: 'Unknown',
+              logo: r.owner.avatar_url
+            }));
+            allRepos = [...formattedGhRepos, ...allRepos];
+          } catch (err) {
+            console.error("Failed to fetch GitHub repos", err);
+          }
+        }
+        setRepos(removeDuplicates(allRepos, 'name'));
+      } catch (e) {
+        console.error(e);
+        setRepos(MOCK_REPOS);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadRepos();
+  }, []);
+
+  const removeDuplicates = (arr: any[], key: string) => {
+    return [...new Map(arr.map(item => [item[key], item])).values()];
+  };
 
   const renderMarkdown = (text: string) => {
     if (!text) return '';
@@ -71,12 +115,12 @@ const Repositories = () => {
       ...newRepoData,
       isPublic: newRepoData.visibility === 'PUBLIC',
     } as Repository;
-    
+
     const updated = [newRepo, ...repos];
     setRepos(updated);
     localStorage.setItem('trackcodex_local_repos', JSON.stringify(updated));
     setIsModalOpen(false);
-    
+
     window.dispatchEvent(new CustomEvent('trackcodex-notification', {
       detail: {
         title: 'Repository Initialized',
@@ -102,7 +146,7 @@ const Repositories = () => {
               Your dashboard for all repositories. Track AI-driven health scores, compliance metrics, and deployment readiness.
             </p>
           </div>
-          <button 
+          <button
             onClick={() => setIsModalOpen(true)}
             className="bg-primary hover:bg-blue-600 text-white px-6 py-2.5 rounded-xl font-black uppercase tracking-widest text-xs flex items-center gap-2 transition-all shadow-lg shadow-primary/20 active:scale-95"
           >
@@ -117,32 +161,31 @@ const Repositories = () => {
               <button
                 key={f}
                 onClick={() => setFilter(f)}
-                className={`px-4 py-1.5 text-[11px] font-black uppercase tracking-widest rounded-lg transition-all ${
-                  filter === f ? 'bg-primary text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'
-                }`}
+                className={`px-4 py-1.5 text-[11px] font-black uppercase tracking-widest rounded-lg transition-all ${filter === f ? 'bg-primary text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'
+                  }`}
               >
                 {f}
               </button>
             ))}
           </div>
           <div className="flex items-center gap-4">
-             <div className="relative group">
-                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm group-focus-within:text-primary transition-colors">search</span>
-                <input className="bg-[#161b22] border border-[#30363d] rounded-xl pl-10 pr-4 py-2 text-xs text-white focus:ring-1 focus:ring-primary w-64 outline-none" placeholder="Filter repositories..." />
-             </div>
-             <div className="flex items-center bg-[#161b22] border border-[#30363d] rounded-xl p-0.5">
-               <button className="size-8 flex items-center justify-center bg-[#2d333b] text-white rounded-lg shadow-sm">
-                 <span className="material-symbols-outlined !text-[20px]">grid_view</span>
-               </button>
-               <button className="size-8 flex items-center justify-center text-slate-500 hover:text-white transition-colors">
-                 <span className="material-symbols-outlined !text-[20px]">list</span>
-               </button>
+            <div className="relative group">
+              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm group-focus-within:text-primary transition-colors">search</span>
+              <input className="bg-[#161b22] border border-[#30363d] rounded-xl pl-10 pr-4 py-2 text-xs text-white focus:ring-1 focus:ring-primary w-64 outline-none" placeholder="Filter repositories..." />
+            </div>
+            <div className="flex items-center bg-[#161b22] border border-[#30363d] rounded-xl p-0.5">
+              <button className="size-8 flex items-center justify-center bg-[#2d333b] text-white rounded-lg shadow-sm">
+                <span className="material-symbols-outlined !text-[20px]">grid_view</span>
+              </button>
+              <button className="size-8 flex items-center justify-center text-slate-500 hover:text-white transition-colors">
+                <span className="material-symbols-outlined !text-[20px]">list</span>
+              </button>
             </div>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          <div 
+          <div
             onClick={() => setIsModalOpen(true)}
             className="border-2 border-dashed border-primary/40 rounded-3xl p-8 flex flex-col items-center justify-center text-center group cursor-pointer bg-primary/5 hover:bg-primary/10 hover:border-primary transition-all min-h-[300px] animate-in fade-in duration-500"
           >
@@ -154,7 +197,7 @@ const Repositories = () => {
           </div>
 
           {filteredRepos.map(repo => (
-            <div 
+            <div
               key={repo.id}
               onClick={(e: React.MouseEvent<HTMLDivElement>) => {
                 if ((e.target as HTMLElement).tagName !== 'A') {
@@ -177,8 +220,8 @@ const Repositories = () => {
                       <h3 className="text-lg font-black text-slate-100 group-hover:text-primary transition-colors leading-none uppercase tracking-tight">{repo.name}</h3>
                     </div>
                     <div className="flex items-center gap-2 mt-1.5">
-                       <span className="px-2 py-0.5 rounded-full border border-[#30363d] text-[9px] text-slate-500 font-black uppercase tracking-widest">{repo.visibility}</span>
-                       <span className="text-[10px] text-slate-600 font-bold uppercase tracking-tight">Updated {repo.lastUpdated}</span>
+                      <span className="px-2 py-0.5 rounded-full border border-[#30363d] text-[9px] text-slate-500 font-black uppercase tracking-widest">{repo.visibility}</span>
+                      <span className="text-[10px] text-slate-600 font-bold uppercase tracking-tight">Updated {repo.lastUpdated}</span>
                     </div>
                   </div>
                 </div>
@@ -201,11 +244,11 @@ const Repositories = () => {
                     <span>{repo.techStack}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                     <span className="material-symbols-outlined !text-[16px]">star</span>
-                     <span>{repo.stars}</span>
+                    <span className="material-symbols-outlined !text-[16px]">star</span>
+                    <span>{repo.stars}</span>
                   </div>
                 </div>
-                <button 
+                <button
                   onClick={(e) => {
                     e.stopPropagation();
                     navigate('/workspace/new');
@@ -220,10 +263,10 @@ const Repositories = () => {
         </div>
       </div>
 
-      <CreateRepoModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        onSubmit={handleCreateRepo} 
+      <CreateRepoModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSubmit={handleCreateRepo}
       />
     </div>
   );

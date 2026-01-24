@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 interface AuthContextType {
   isAuthenticated: boolean;
   user: any | null;
-  login: (data: any) => void;
+  login: (data: any, provider?: string) => void;
   logout: () => void;
   isLoading: boolean;
 }
@@ -27,10 +27,31 @@ export const AuthProvider = ({ children }: React.PropsWithChildren<{}>) => {
     setIsLoading(false);
   }, []);
 
-  const login = (data: any) => {
+  const login = (data: any, provider?: string) => {
     localStorage.setItem('trackcodex_token', 'dummy-token');
+
+    // Auto-connect GitHub integration if logging in via GitHub
+    if (provider === 'github') {
+      const integrations = [
+        { id: 'github', name: 'GitHub', description: 'Sync repositories, issues, and pull requests.', icon: 'code', connected: true, color: 'text-white' },
+        { id: 'gitlab', name: 'GitLab', description: 'Connect your GitLab projects and CI/CD pipelines.', icon: 'code_blocks', connected: false, color: 'text-orange-500' },
+        // ... preserve others default state
+        { id: 'forgebrowser', name: 'ForgeBrowser', description: 'Enable deep context search across web resources.', icon: 'travel_explore', connected: true, color: 'text-cyan-400' },
+        { id: 'quantalab', name: 'QuantaLab', description: 'Unified lab environment for AI experiments.', icon: 'science', connected: false, color: 'text-purple-400' },
+        { id: 'quantacode', name: 'QuantaCode', description: 'Advanced code analysis and refactoring engine.', icon: 'code_off', connected: true, color: 'text-emerald-400' }
+      ];
+      localStorage.setItem('trackcodex_integrations', JSON.stringify(integrations));
+
+      // Also simulate an auto-sync notification
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('trackcodex-notification', {
+          detail: { title: 'GitHub Connected', message: 'Your repositories are syncing automatically.', type: 'success' }
+        }));
+      }, 1000);
+    }
+
     setIsAuthenticated(true);
-    setUser({ username: 'alexcoder' });
+    setUser({ username: 'alexcoder', provider: provider || 'email' });
     navigate('/dashboard/home');
   };
 

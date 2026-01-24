@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-type ThemeMode = 'light' | 'dark' | 'system';
+export type FontTheme = 'inter' | 'system' | 'mono';
+export type AnimationDensity = 'standard' | 'fast' | 'none';
+export type ThemeMode = 'light' | 'dark' | 'system';
 
 interface ThemeContextType {
   mode: ThemeMode;
@@ -8,8 +10,12 @@ interface ThemeContextType {
   resolvedTheme: 'light' | 'dark';
   isHighContrast: boolean;
   setIsHighContrast: (isHigh: boolean) => void;
-  isMotionReduced: boolean;
+  isMotionReduced: boolean; // Keeping for backward compat, mapped to 'none'
   setIsMotionReduced: (isReduced: boolean) => void;
+  fontTheme: FontTheme;
+  setFontTheme: (font: FontTheme) => void;
+  animationDensity: AnimationDensity;
+  setAnimationDensity: (density: AnimationDensity) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -18,6 +24,14 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [mode, setMode] = useState<ThemeMode>(() => {
     const saved = localStorage.getItem('trackcodex_theme_mode');
     return (saved as ThemeMode) || 'system';
+  });
+
+  const [fontTheme, setFontThemeInternal] = useState<FontTheme>(() => {
+    return (localStorage.getItem('trackcodex_font_theme') as FontTheme) || 'inter';
+  });
+
+  const [animationDensity, setAnimationDensityInternal] = useState<AnimationDensity>(() => {
+    return (localStorage.getItem('trackcodex_animation_density') as AnimationDensity) || 'standard';
   });
 
   const [isHighContrast, setIsHighContrastInternal] = useState<boolean>(() => {
@@ -29,14 +43,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   });
 
-  const [isMotionReduced, setIsMotionReducedInternal] = useState<boolean>(() => {
-    try {
-      const saved = localStorage.getItem('trackcodex_reduce_motion');
-      return saved ? JSON.parse(saved) : false;
-    } catch {
-      return false;
-    }
-  });
+  // Deprecated direct state, now derived/synced with animationDensity for back-compat
+  const isMotionReduced = animationDensity === 'none';
 
   const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('dark');
 
@@ -44,10 +52,19 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     localStorage.setItem('trackcodex_high_contrast', JSON.stringify(isHigh));
     setIsHighContrastInternal(isHigh);
   };
-  
+
   const setIsMotionReduced = (isReduced: boolean) => {
-    localStorage.setItem('trackcodex_reduce_motion', JSON.stringify(isReduced));
-    setIsMotionReducedInternal(isReduced);
+    setAnimationDensity(isReduced ? 'none' : 'standard');
+  };
+
+  const setFontTheme = (font: FontTheme) => {
+    localStorage.setItem('trackcodex_font_theme', font);
+    setFontThemeInternal(font);
+  };
+
+  const setAnimationDensity = (density: AnimationDensity) => {
+    localStorage.setItem('trackcodex_animation_density', density);
+    setAnimationDensityInternal(density);
   };
 
   useEffect(() => {
@@ -72,17 +89,18 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     updateTheme();
 
-    if (isHighContrast) {
-      root.classList.add('high-contrast');
-    } else {
-      root.classList.remove('high-contrast');
-    }
+    // Apply High Contrast
+    if (isHighContrast) root.classList.add('high-contrast');
+    else root.classList.remove('high-contrast');
 
-    if (isMotionReduced) {
-      root.classList.add('reduce-motion');
-    } else {
-      root.classList.remove('reduce-motion');
-    }
+    // Apply Font Theme
+    root.classList.remove('font-inter', 'font-system', 'font-mono');
+    root.classList.add(`font-${fontTheme}`);
+
+    // Apply Animation Density
+    root.classList.remove('anim-standard', 'anim-fast', 'reduce-motion');
+    if (animationDensity === 'none') root.classList.add('reduce-motion');
+    else root.classList.add(`anim-${animationDensity}`);
 
     if (mode === 'system') {
       const mediaQuery = window.matchMedia('(prefers-color-scheme: light)');
@@ -90,10 +108,17 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       mediaQuery.addEventListener('change', listener);
       return () => mediaQuery.removeEventListener('change', listener);
     }
-  }, [mode, isHighContrast, isMotionReduced]);
+  }, [mode, isHighContrast, fontTheme, animationDensity]);
 
   return (
-    <ThemeContext.Provider value={{ mode, setMode, resolvedTheme, isHighContrast, setIsHighContrast, isMotionReduced, setIsMotionReduced }}>
+    <ThemeContext.Provider value={{
+      mode, setMode,
+      resolvedTheme,
+      isHighContrast, setIsHighContrast,
+      isMotionReduced, setIsMotionReduced,
+      fontTheme, setFontTheme,
+      animationDensity, setAnimationDensity
+    }}>
       {children}
     </ThemeContext.Provider>
   );

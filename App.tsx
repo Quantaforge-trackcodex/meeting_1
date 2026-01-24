@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
@@ -13,6 +13,7 @@ import Sidebar from './components/layout/Sidebar';
 import MessagingPanel from './components/messaging/MessagingPanel';
 import SplashScreen from './components/branding/SplashScreen';
 import SettingsLayout from './components/settings/SettingsLayout';
+import CommandPalette from './components/layout/CommandPalette';
 
 // Core Views
 import RepositoriesView from './views/Repositories';
@@ -26,7 +27,8 @@ import WorkspaceDetailView from './views/WorkspaceDetailView';
 import HomeView from './views/Home';
 import LibraryView from './views/Library';
 import ForgeAIView from './views/ForgeAI';
-import LiveSessions from './views/LiveSessions';
+import NotificationsView from './views/NotificationsView';
+
 import AdminRoomView from './views/Admin';
 import PlatformMatrix from './views/PlatformMatrix';
 import ActivityView from './views/ActivityView';
@@ -58,13 +60,14 @@ import ForgeAIUsageSettings from './views/settings/ForgeAIUsageSettings';
 import AccessibilitySettings from './views/settings/AccessibilitySettings';
 import NotificationsSettings from './views/settings/NotificationsSettings';
 import PersonalAccessTokensSettings from './views/settings/PersonalAccessTokensSettings';
+import IntegrationsSettings from './views/settings/IntegrationsSettings';
 
 // --- NEW HIRING & GROWTH VIEWS ---
 import MarketplaceLayout from './views/marketplace/MarketplaceLayout';
 import OnboardingLayout from './views/onboarding/OnboardingLayout';
 import WelcomeView from './views/onboarding/WelcomeView';
 import OfferAcceptanceView from './views/trials/OfferAcceptanceView';
-import LivePairingLobbyView from './views/trials/LivePairingLobbyView';
+
 import TrialSubmittedView from './views/trials/TrialSubmittedView';
 
 // --- Marketplace Sub-views ---
@@ -108,6 +111,7 @@ const ProtectedApp = () => {
   const [isFocusMode, setIsFocusMode] = useState(false);
   const mainScrollRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (mainScrollRef.current) mainScrollRef.current.scrollTop = 0;
@@ -128,38 +132,181 @@ const ProtectedApp = () => {
     setNotification(null);
   };
 
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const isIdeView = ['/editor', '/workspace/', '/trials/live-session'].some(path => location.pathname.includes(path));
+
+  // Close menus when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (isAddMenuOpen && !target.closest('.add-menu-container')) setIsAddMenuOpen(false);
+      if (isNotificationsOpen && !target.closest('.notifications-container')) setIsNotificationsOpen(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isAddMenuOpen, isNotificationsOpen]);
+
+  const MOCK_NOTIFICATIONS = [
+    { id: 1, type: 'job', title: 'New Mission Offer', message: 'Cyberdyne Systems wants you for "AI Core Optimization".', time: '2m ago', read: false },
+    { id: 2, type: 'comment', title: 'New Comment', message: 'Alex replied to your PR #42: "Great work on the refactor!"', time: '1h ago', read: true },
+    { id: 3, type: 'community', title: 'Community Trending', message: 'Your post "Rust vs C++ in 2024" is trending.', time: '3h ago', read: true },
+    { id: 4, type: 'system', title: 'System Update', message: 'TrackCodex v2.4.0 is now live.', time: '1d ago', read: true }
+  ];
 
   return (
     <div className="flex flex-col h-screen w-full overflow-hidden text-slate-300 font-display bg-[#0d0d0f] transition-colors duration-300">
-      
+
       {notification && (
-         <div className="fixed top-12 right-12 z-[500] bg-[#161b22] border border-primary/30 rounded-2xl p-6 shadow-2xl animate-in slide-in-from-right duration-300 flex flex-col gap-6 max-w-sm ring-2 ring-black/50 ring-inset">
-           <div className="flex items-start gap-4">
-              <div className={`size-12 rounded-xl flex items-center justify-center shrink-0 ${notification.type === 'mission' ? 'bg-amber-500/10 text-amber-500' : notification.type === 'success' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-primary/10 text-primary'}`}>
-                <span className="material-symbols-outlined !text-3xl filled">{notification.type === 'mission' ? 'work' : 'verified'}</span>
-              </div>
-              <div className="min-w-0">
-                  <h4 className="text-[15px] font-black text-white uppercase tracking-tight truncate">{notification.title}</h4>
-                  <p className="text-[13px] text-slate-400 mt-1 leading-relaxed">{notification.message}</p>
-              </div>
-              <button onClick={() => setNotification(null)} className="text-gh-text-secondary hover:text-white shrink-0 mt-1">
-                  <span className="material-symbols-outlined !text-[20px]">close</span>
-              </button>
-           </div>
-           {notification.hasActions && (
-             <div className="flex items-center gap-3"><button onClick={() => handleAction('accept')} className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-[11px] font-black uppercase tracking-widest transition-all">Accept</button><button onClick={() => handleAction('reject')} className="flex-1 py-2.5 bg-[#0d1117] border border-[#30363d] text-slate-400 rounded-xl text-[11px] font-black uppercase tracking-widest">Reject</button></div>
-           )}
+        <div className="fixed top-12 right-12 z-[500] bg-[#161b22] border border-primary/30 rounded-2xl p-6 shadow-2xl animate-in slide-in-from-right duration-300 flex flex-col gap-6 max-w-sm ring-2 ring-black/50 ring-inset">
+          <div className="flex items-start gap-4">
+            <div className={`size-12 rounded-xl flex items-center justify-center shrink-0 ${notification.type === 'mission' ? 'bg-amber-500/10 text-amber-500' : notification.type === 'success' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-primary/10 text-primary'}`}>
+              <span className="material-symbols-outlined !text-3xl filled">{notification.type === 'mission' ? 'work' : 'verified'}</span>
+            </div>
+            <div className="min-w-0">
+              <h4 className="text-[15px] font-black text-white uppercase tracking-tight truncate">{notification.title}</h4>
+              <p className="text-[13px] text-slate-400 mt-1 leading-relaxed">{notification.message}</p>
+            </div>
+            <button onClick={() => setNotification(null)} className="text-gh-text-secondary hover:text-white shrink-0 mt-1">
+              <span className="material-symbols-outlined !text-[20px]">close</span>
+            </button>
+          </div>
+          {notification.hasActions && (
+            <div className="flex items-center gap-3"><button onClick={() => handleAction('accept')} className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-[11px] font-black uppercase tracking-widest transition-all">Accept</button><button onClick={() => handleAction('reject')} className="flex-1 py-2.5 bg-[#0d1117] border border-[#30363d] text-slate-400 rounded-xl text-[11px] font-black uppercase tracking-widest">Reject</button></div>
+          )}
         </div>
       )}
 
       <div className="flex-1 flex min-h-0">
         {!isFocusMode && <Sidebar />}
-        
-        <main 
+
+        <main
           ref={mainScrollRef}
           className={`flex-1 min-w-0 flex flex-col bg-gh-bg relative ${isIdeView || isFocusMode ? 'overflow-hidden' : 'overflow-y-auto custom-scrollbar'}`}
         >
+          {/* Global Search Header - Visible on all non-IDE pages if desired, or just home. User wants 'Global'. */}
+          {!isIdeView && !isFocusMode && (
+            <div className="h-14 border-b border-white/5 grid grid-cols-[1fr_auto_1fr] items-center px-6 bg-[#0d1117] shrink-0 sticky top-0 z-40">
+              <div className="flex items-center">
+                {/* Left Spacer / Breadcrumbs placeholder */}
+              </div>
+
+              <div
+                onClick={() => setIsCommandPaletteOpen(true)}
+                className="flex items-center gap-2 px-3 py-1.5 bg-[#161b22] border border-[#30363d] rounded-md w-[400px] cursor-pointer hover:border-slate-500 transition-colors group shadow-sm"
+              >
+                <span className="material-symbols-outlined !text-[16px] text-slate-500 group-hover:text-slate-300">search</span>
+                <span className="text-sm text-slate-500 group-hover:text-slate-300 flex-1">Type <kbd className="border border-[#30363d] rounded px-1 text-[10px] bg-[#0d1117]">/</kbd> to search</span>
+              </div>
+
+              <div className="flex items-center justify-end gap-4">
+                {/* Notifications Dropdown */}
+                <div className="relative notifications-container">
+                  <button
+                    onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+                    className={`text-slate-400 hover:text-white transition-colors relative ${isNotificationsOpen ? 'text-white' : ''}`}
+                    title="Notifications"
+                  >
+                    <span className="material-symbols-outlined !text-[20px]">notifications</span>
+                    <span className="absolute top-0 right-0 size-2 bg-blue-500 rounded-full border-2 border-[#0d1117]"></span>
+                  </button>
+
+                  {isNotificationsOpen && (
+                    <div className="absolute top-full right-0 mt-2 w-80 bg-[#161b22] border border-[#30363d] rounded-xl shadow-xl z-50 animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
+                      <div className="flex items-center justify-between px-4 py-3 border-b border-[#30363d]/50 bg-[#0d1117]">
+                        <span className="text-xs font-black uppercase tracking-widest text-white">Notifications</span>
+                        <button className="text-[10px] text-primary hover:underline">Mark all read</button>
+                      </div>
+                      <div className="max-h-[300px] overflow-y-auto custom-scrollbar">
+                        {MOCK_NOTIFICATIONS.map(notif => (
+                          <div key={notif.id} className={`px-4 py-3 border-b border-[#30363d]/30 hover:bg-[#1f242c] transition-colors cursor-pointer group ${!notif.read ? 'bg-primary/5' : ''}`}>
+                            <div className="flex items-start gap-3">
+                              <div className={`mt-0.5 size-8 rounded-lg flex items-center justify-center shrink-0 ${notif.type === 'job' ? 'bg-amber-500/10 text-amber-500' :
+                                notif.type === 'comment' ? 'bg-blue-500/10 text-blue-500' :
+                                  notif.type === 'community' ? 'bg-purple-500/10 text-purple-500' : 'bg-slate-500/10 text-slate-400'
+                                }`}>
+                                <span className="material-symbols-outlined !text-[16px]">
+                                  {notif.type === 'job' ? 'work' : notif.type === 'comment' ? 'chat_bubble' : notif.type === 'community' ? 'local_fire_department' : 'info'}
+                                </span>
+                              </div>
+                              <div>
+                                <div className="flex items-center justify-between mb-0.5">
+                                  <h5 className={`text-sm font-bold ${!notif.read ? 'text-white' : 'text-slate-400'}`}>{notif.title}</h5>
+                                  <span className="text-[10px] text-slate-500">{notif.time}</span>
+                                </div>
+                                <p className="text-xs text-slate-400 leading-relaxed line-clamp-2 group-hover:text-slate-300">{notif.message}</p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <button onClick={() => navigate('/settings/notifications')} className="w-full py-2 text-[10px] font-bold text-slate-500 hover:text-white bg-[#0d1117] border-t border-[#30363d]/50 transition-colors uppercase tracking-widest">
+                        View All Notifications
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Add Menu Dropdown */}
+                <div className="relative add-menu-container">
+                  <button
+                    onClick={() => setIsAddMenuOpen(!isAddMenuOpen)}
+                    className={`text-slate-400 hover:text-white transition-colors ${isAddMenuOpen ? 'text-white' : ''}`}
+                    title="Create New..."
+                  >
+                    <span className="material-symbols-outlined !text-[20px]">add</span>
+                  </button>
+
+                  {isAddMenuOpen && (
+                    <div className="absolute top-full right-0 mt-2 w-48 bg-[#161b22] border border-[#30363d] rounded-xl shadow-xl py-1 z-50 animate-in fade-in zoom-in-95 duration-200">
+                      <div className="px-3 py-2 border-b border-[#30363d]/50 mb-1">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Create New</span>
+                      </div>
+                      <button
+                        onClick={() => { setIsAddMenuOpen(false); navigate('/workspace/new'); }}
+                        className="w-full text-left px-4 py-2 text-sm text-slate-300 hover:text-white hover:bg-[#1f242c] flex items-center gap-2"
+                      >
+                        <span className="material-symbols-outlined !text-[16px]">laptop_mac</span>
+                        Workspace
+                      </button>
+                      <button
+                        onClick={() => { setIsAddMenuOpen(false); navigate('/repositories'); }}
+                        className="w-full text-left px-4 py-2 text-sm text-slate-300 hover:text-white hover:bg-[#1f242c] flex items-center gap-2"
+                      >
+                        <span className="material-symbols-outlined !text-[16px]">folder_open</span>
+                        Repository
+                      </button>
+                      <button
+                        onClick={() => { setIsAddMenuOpen(false); navigate('/marketplace/missions'); }}
+                        className="w-full text-left px-4 py-2 text-sm text-slate-300 hover:text-white hover:bg-[#1f242c] flex items-center gap-2"
+                      >
+                        <span className="material-symbols-outlined !text-[16px]">rocket_launch</span>
+                        Mission
+                      </button>
+                      <div className="h-px bg-[#30363d]/50 my-1"></div>
+                      <button
+                        onClick={() => { setIsAddMenuOpen(false); navigate('/organizations'); }}
+                        className="w-full text-left px-4 py-2 text-sm text-slate-300 hover:text-white hover:bg-[#1f242c] flex items-center gap-2"
+                      >
+                        <span className="material-symbols-outlined !text-[16px]">domain</span>
+                        Organization
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <div
+                  onClick={() => navigate('/settings/profile')}
+                  className="cursor-pointer"
+                  title="Profile Settings"
+                >
+                  <img src="https://picsum.photos/seed/alexprofile/64" className="size-6 rounded-full border border-white/10 hover:border-white/50 transition-colors" />
+                </div>
+              </div>
+            </div >
+          )}
+
           <Routes>
             <Route path="/" element={<Navigate to="/dashboard/home" />} />
             <Route path="/dashboard/home" element={<HomeView />} />
@@ -175,106 +322,110 @@ const ProtectedApp = () => {
             <Route path="/editor" element={<EditorView isFocusMode={isFocusMode} />} />
             <Route path="/profile" element={<ProfileView />} />
             <Route path="/activity" element={<ActivityView />} />
-            
+            <Route path="/notifications" element={<NotificationsView />} />
+
             <Route path="/organizations" element={<OrganizationIndexView />} />
             <Route path="/org/:orgId" element={<OrganizationDetailView />}>
-                <Route index element={<OrgOverview />} />
-                <Route path="repositories" element={<OrgRepositories />} />
-                <Route path="people" element={<OrgPeople />} />
-                <Route path="teams" element={<OrgTeams />} />
-                <Route path="settings" element={<OrgSettingsLayout />}>
-                    <Route index element={<Navigate to="general" replace />} />
-                    <Route path="general" element={<OrgGeneralSettings />} />
-                    <Route path="authentication" element={<OrgAuthenticationSecurity />} />
-                    <Route path="environments" element={<OrgEnvironments />} />
-                    <Route path="permissions" element={<OrgPermissions />} />
-                    <Route path="webhooks" element={<OrgWebhooks />} />
-                    <Route path="*" element={<Navigate to="general" replace />} />
-                </Route>
-                <Route path="*" element={<Navigate to="" replace />} />
+              <Route index element={<OrgOverview />} />
+              <Route path="repositories" element={<OrgRepositories />} />
+              <Route path="people" element={<OrgPeople />} />
+              <Route path="teams" element={<OrgTeams />} />
+              <Route path="settings" element={<OrgSettingsLayout />}>
+                <Route index element={<Navigate to="general" replace />} />
+                <Route path="general" element={<OrgGeneralSettings />} />
+                <Route path="authentication" element={<OrgAuthenticationSecurity />} />
+                <Route path="environments" element={<OrgEnvironments />} />
+                <Route path="permissions" element={<OrgPermissions />} />
+                <Route path="webhooks" element={<OrgWebhooks />} />
+                <Route path="*" element={<Navigate to="general" replace />} />
+              </Route>
+              <Route path="*" element={<Navigate to="" replace />} />
             </Route>
 
             <Route path="/marketplace" element={<MarketplaceLayout />}>
-                <Route index element={<Navigate to="missions" replace />} />
-                <Route path="missions" element={<MissionsView />} />
-                <Route path="missions/:id" element={<MissionDetailView />} />
-                <Route path="trials" element={<TrialRepositoriesView />} />
-                
-                <Route path="hiring" element={<HiringLayout />}>
-                    <Route index element={<Navigate to="discovery" replace />} />
-                    <Route path="discovery" element={<CandidateDiscoveryView />} />
-                    <Route path="candidate/:id" element={<CandidateScorecardView />} />
-                    <Route path="compare" element={<CandidateComparisonView />} />
-                    <Route path="offer/:id" element={<OfferEditorView />} />
-                    <Route path="schedule/:id" element={<SessionSchedulerView />} />
-                    <Route path="feedback/:id" element={<InterviewerFeedbackView />} />
-                    <Route path="assessments" element={<AssessmentsView />} />
-                    <Route path="*" element={<Navigate to="discovery" replace />} />
-                </Route>
+              <Route index element={<Navigate to="missions" replace />} />
+              <Route path="missions" element={<MissionsView />} />
+              <Route path="missions/:id" element={<MissionDetailView />} />
+              <Route path="trials" element={<TrialRepositoriesView />} />
 
-                <Route path="growth" element={<GrowthLayout />}>
-                    <Route index element={<Navigate to="dashboard" replace />} />
-                    <Route path="dashboard" element={<SkillDashboardView />} />
-                    <Route path="profile/:id" element={<DeveloperProfileView />} />
-                    <Route path="*" element={<Navigate to="dashboard" replace />} />
-                </Route>
+              <Route path="hiring" element={<HiringLayout />}>
+                <Route index element={<Navigate to="discovery" replace />} />
+                <Route path="discovery" element={<CandidateDiscoveryView />} />
+                <Route path="candidate/:id" element={<CandidateScorecardView />} />
+                <Route path="compare" element={<CandidateComparisonView />} />
+                <Route path="offer/:id" element={<OfferEditorView />} />
+                <Route path="schedule/:id" element={<SessionSchedulerView />} />
+                <Route path="feedback/:id" element={<InterviewerFeedbackView />} />
+                <Route path="assessments" element={<AssessmentsView />} />
+                <Route path="*" element={<Navigate to="discovery" replace />} />
+              </Route>
 
-                <Route path="*" element={<Navigate to="missions" replace />} />
+              <Route path="growth" element={<GrowthLayout />}>
+                <Route index element={<Navigate to="dashboard" replace />} />
+                <Route path="dashboard" element={<SkillDashboardView />} />
+                <Route path="profile/:id" element={<DeveloperProfileView />} />
+                <Route path="*" element={<Navigate to="dashboard" replace />} />
+              </Route>
+
+              <Route path="*" element={<Navigate to="missions" replace />} />
             </Route>
             <Route path="/dashboard/jobs" element={<Navigate to="/marketplace/missions" replace />} />
             <Route path="/jobs/:id" element={<Navigate to="/marketplace/missions/:id" replace />} />
-            
+
             <Route path="/onboarding" element={<OnboardingLayout />}>
-                <Route index element={<Navigate to="dashboard" replace />} />
-                <Route path="dashboard" element={<OnboardingWorkspace />} />
-                <Route path="buddy" element={<BuddyDashboardView />} />
-                <Route path="*" element={<Navigate to="dashboard" replace />} />
+              <Route index element={<Navigate to="dashboard" replace />} />
+              <Route path="dashboard" element={<OnboardingWorkspace />} />
+              <Route path="buddy" element={<BuddyDashboardView />} />
+              <Route path="*" element={<Navigate to="dashboard" replace />} />
             </Route>
 
             <Route path="/welcome/:userId" element={<WelcomeView />} />
             <Route path="/offer/:offerId/accept" element={<OfferAcceptanceView />} />
-            <Route path="/trials/lobby/:sessionId" element={<LivePairingLobbyView />} />
+
             <Route path="/trials/submitted/:trialId" element={<TrialSubmittedView />} />
 
             <Route path="/settings" element={<SettingsLayout />}>
-                <Route index element={<Navigate to="profile" replace />} />
-                <Route path="profile" element={<ProfileSettings />} />
-                <Route path="account" element={<AccountSettings />} />
-                <Route path="appearance" element={<AppearanceSettings />} />
-                <Route path="accessibility" element={<AccessibilitySettings />} />
-                <Route path="notifications" element={<NotificationsSettings />} />
-                <Route path="security" element={<SecuritySettings />} />
-                <Route path="emails" element={<EmailSettings />} />
-                <Route path="billing" element={<BillingSettings />} />
-                <Route path="forge-ai-usage" element={<ForgeAIUsageSettings />} />
-                <Route path="tokens" element={<PersonalAccessTokensSettings />} />
-                <Route path="*" element={<Navigate to="profile" replace />} />
+              <Route index element={<Navigate to="profile" replace />} />
+              <Route path="profile" element={<ProfileSettings />} />
+              <Route path="account" element={<AccountSettings />} />
+              <Route path="appearance" element={<AppearanceSettings />} />
+              <Route path="accessibility" element={<AccessibilitySettings />} />
+              <Route path="notifications" element={<NotificationsSettings />} />
+              <Route path="security" element={<SecuritySettings />} />
+              <Route path="emails" element={<EmailSettings />} />
+              <Route path="billing" element={<BillingSettings />} />
+              <Route path="forge-ai-usage" element={<ForgeAIUsageSettings />} />
+              <Route path="tokens" element={<PersonalAccessTokensSettings />} />
+              <Route path="integrations" element={<IntegrationsSettings />} />
+              <Route path="*" element={<Navigate to="profile" replace />} />
             </Route>
 
             <Route path="/forge-ai" element={<ForgeAIView />} />
-            <Route path="/live-sessions" element={<LiveSessions />} />
+
 
             <Route path="/admin" element={<RoleGuard><AdminRoomView /></RoleGuard>}>
-                <Route index element={<AdminOverview />} />
-                <Route path="users" element={<UserManager />} />
-                <Route path="teams" element={<TeamManager />} />
-                <Route path="workspaces" element={<WorkspaceMonitor />} />
-                <Route path="repositories" element={<RepositoryGovernance />} />
-                <Route path="jobs" element={<JobOversight />} />
-                <Route path="community" element={<CommunityModeration />} />
-                <Route path="roles" element={<RoleEditor />} />
-                <Route path="audit-logs" element={<AuditLogs />} />
-                <Route path="*" element={<Navigate to="/admin" replace />} />
+              <Route index element={<AdminOverview />} />
+              <Route path="users" element={<UserManager />} />
+              <Route path="teams" element={<TeamManager />} />
+              <Route path="workspaces" element={<WorkspaceMonitor />} />
+              <Route path="repositories" element={<RepositoryGovernance />} />
+              <Route path="jobs" element={<JobOversight />} />
+              <Route path="community" element={<CommunityModeration />} />
+              <Route path="roles" element={<RoleEditor />} />
+              <Route path="audit-logs" element={<AuditLogs />} />
+              <Route path="*" element={<Navigate to="/admin" replace />} />
             </Route>
-            
+
             <Route path="*" element={<Navigate to="/dashboard/home" />} />
           </Routes>
-        </main>
-      </div>
+        </main >
+      </div >
 
       {!isFocusMode && <StatusBar />}
       {!isFocusMode && <MessagingPanel />}
-    </div>
+
+      <CommandPalette isOpen={isCommandPaletteOpen} onClose={() => setIsCommandPaletteOpen(false)} />
+    </div >
   );
 };
 
@@ -290,9 +441,9 @@ const AppContent = () => {
   if (isLoading || isAppLoading) {
     return <SplashScreen />;
   }
-  
+
   return (
-     <Routes>
+    <Routes>
       {!isAuthenticated ? (
         <>
           <Route path="/login" element={<Login />} />
@@ -316,9 +467,9 @@ const AppWithProviders = () => (
 
 const App = () => (
   <ThemeProvider>
-    <BrowserRouter>
+    <HashRouter>
       <AppWithProviders />
-    </BrowserRouter>
+    </HashRouter>
   </ThemeProvider>
 );
 

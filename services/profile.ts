@@ -17,9 +17,9 @@ export interface TechStatus {
 }
 
 export interface Achievement {
-    name: string;
-    imageUrl: string;
-    count: number;
+  name: string;
+  imageUrl: string;
+  count: number;
 }
 
 export interface UserProfile {
@@ -124,7 +124,7 @@ export const profileService = {
   addKarma(points: number) {
     const profile = this.getProfile();
     this.updateProfile({ communityKarma: profile.communityKarma + points });
-    
+
     window.dispatchEvent(new CustomEvent('trackcodex-notification', {
       detail: {
         title: 'Reputation Gain',
@@ -153,7 +153,7 @@ export const profileService = {
     const totalPoints = profile.rating * profile.ratingCount;
     const newCount = profile.ratingCount + 1;
     const updatedRating = Number(((totalPoints + newRating) / newCount).toFixed(1));
-    
+
     const newReview: Review = {
       id: `rev-${Date.now()}`,
       jobTitle: jobTitle || 'Confidential Mission',
@@ -172,6 +172,29 @@ export const profileService = {
 
     this.addKarma(25);
     systemBus.emit('JOB_COMPLETED', { rating: newRating });
+  },
+
+  simulateNewFollower() {
+    const profile = this.getProfile();
+    const newCount = profile.followers + 1;
+    this.updateProfile({ followers: newCount });
+
+    // Optional: Notification for "realism"
+    window.dispatchEvent(new CustomEvent('trackcodex-notification', {
+      detail: {
+        title: 'New Follower',
+        message: 'Someone just followed you!',
+        type: 'info'
+      }
+    }));
+  },
+
+  simulateUnfollow() {
+    const profile = this.getProfile();
+    // Prevent negative followers
+    if (profile.followers > 0) {
+      this.updateProfile({ followers: profile.followers - 1 });
+    }
   },
 
   subscribe(callback: (profile: UserProfile) => void) {

@@ -2,14 +2,15 @@ import React from 'react';
 import { NavLink, useParams, Outlet, useOutletContext } from 'react-router-dom';
 import { Organization } from '../../types';
 
+import SettingsContextSwitcher from '../settings/SettingsContextSwitcher';
+
 const SettingsNavItem = ({ to, label, icon }: { to: string; label: string; icon: string }) => (
   <NavLink
     to={to}
     className={({ isActive }) =>
-      `flex items-center gap-3 px-3 py-2 rounded-md text-[13px] font-medium transition-all ${
-        isActive 
-          ? 'bg-white/10 text-white' 
-          : 'text-slate-400 hover:bg-white/5 hover:text-white'
+      `flex items-center gap-3 px-3 py-2 rounded-md text-[13px] font-medium transition-all ${isActive
+        ? 'bg-white/10 text-white'
+        : 'text-slate-400 hover:bg-white/5 hover:text-white'
       }`
     }
   >
@@ -28,14 +29,15 @@ const OrgSettingsLayout: React.FC = () => {
       <div className="max-w-[1400px] w-full mx-auto flex gap-8">
         {/* Settings Sidebar */}
         <aside className="w-[240px] shrink-0 space-y-8">
-          <div className="flex items-center gap-3 px-3">
-            <img src={org.avatar} className="size-8 rounded-md border border-gh-border p-0.5" />
-            <div>
-                <h2 className="text-sm font-bold text-white">{org.name}</h2>
-                <p className="text-xs text-slate-500">Free Plan</p>
-            </div>
+          <div className="px-1 pt-8">
+            <SettingsContextSwitcher
+              currentContext="organization"
+              orgName={org.name}
+              orgAvatar={org.avatar}
+              orgId={orgId}
+            />
           </div>
-          
+
           <section>
             <h3 className="px-3 text-[10px] font-black uppercase text-slate-500 tracking-widest mb-2">Settings</h3>
             <nav className="flex flex-col gap-0.5">

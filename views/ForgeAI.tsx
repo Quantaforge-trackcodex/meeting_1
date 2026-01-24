@@ -10,18 +10,18 @@ const ForgeAIView = () => {
   const handleAsk = async () => {
     if (!prompt.trim()) return;
     setIsAnalyzing(true);
-    
+
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-1.5-flash',
         contents: prompt,
         config: {
           systemInstruction: 'You are ForgeAI, an advanced engineering co-pilot. Help the user with technical questions, code reviews, and project planning.',
           temperature: 0.7,
         }
       });
-      
+
       setResults(prev => [{ type: 'AI', content: response.text || 'No response.' }, ...prev]);
       setPrompt('');
     } catch (error) {

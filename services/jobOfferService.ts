@@ -8,7 +8,7 @@ export const jobOfferService = {
   createOffer(jobData: Partial<Job>) {
     const jobs = this.getOfferedJobs();
     const currentUser = profileService.getProfile();
-    
+
     const newJob: Job = {
       id: `job-offer-${Date.now()}`,
       title: jobData.title || 'Untitled Offer',
@@ -24,12 +24,14 @@ export const jobOfferService = {
       },
       postedDate: 'Just now',
       targetUserId: jobData.targetUserId,
-      personalNote: jobData.personalNote
+      targetUserId: jobData.targetUserId,
+      personalNote: jobData.personalNote,
+      offerDetails: jobData.offerDetails // Persist rich offer details
     };
 
     const updatedJobs = [newJob, ...jobs];
     localStorage.setItem(JOB_STORAGE_KEY, JSON.stringify(updatedJobs));
-    
+
     // Trigger global notification with functional buttons
     window.dispatchEvent(new CustomEvent('trackcodex-notification', {
       detail: {

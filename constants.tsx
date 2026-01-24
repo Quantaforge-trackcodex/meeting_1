@@ -24,7 +24,98 @@ export const MOCK_REPOS: Repository[] = [
       { id: '1', type: 'Complexity', description: 'The `processData` function in `utils.ts` has a cyclomatic complexity of 24.', target: 'utils.ts' },
       { id: '2', type: 'Modernization', description: "Convert 'var' declarations to 'const' in legacy module `auth.js`.", target: 'auth.js' }
     ],
-    releaseVersion: 'v2.4.0'
+    releaseVersion: 'v2.4.0',
+    readme: `
+<div class="flex flex-col items-center justify-center mb-8 text-center pb-8 border-b border-[#30363d]">
+    <div class="size-24 bg-gradient-to-br from-white to-slate-400 rounded-xl flex items-center justify-center mb-4 shadow-[0_0_40px_rgba(255,255,255,0.1)]">
+        <span class="material-symbols-outlined !text-[48px] text-black">code_blocks</span>
+    </div>
+    <h1 class="text-4xl font-black text-white mb-2 tracking-tight">QuantaCode</h1>
+    <p class="text-xl text-slate-400 font-light">The Advanced AI-Powered Code Editor</p>
+    
+    <div class="flex items-center gap-2 mt-6">
+        <span class="px-2 py-0.5 bg-[#21262d] border border-[#30363d] text-xs font-mono text-slate-300 rounded-l">Last Release</span>
+        <span class="px-2 py-0.5 bg-[#b91c1c] text-white text-xs font-bold font-mono rounded-r">No release or repo not found</span>
+        <span class="px-2 py-0.5 bg-[#21262d] border border-[#30363d] text-xs font-mono text-slate-300 rounded-l ml-2">License</span>
+        <span class="px-2 py-0.5 bg-[#a3e635] text-black text-xs font-bold font-mono rounded-r">MIT</span>
+    </div>
+</div>
+
+<p class="text-base leading-relaxed mb-6">
+    QuantaCode is a next-generation code editor built for the AI era. Forked from the robust VS Code OSS foundation, it integrates native AI capabilities and intelligent web scaling tools directly into your workflow.
+</p>
+
+<h2 class="text-2xl font-bold text-white border-b border-[#30363d] pb-2 mb-4 flex items-center gap-2">
+    <span class="material-symbols-outlined !text-[24px] text-rose-500">rocket_launch</span> Key Features
+</h2>
+
+<h3 class="text-lg font-bold text-white mb-2 flex items-center gap-2">
+    <span class="material-symbols-outlined !text-[20px] text-purple-400">psychology</span> Antigravity AI
+</h3>
+<p class="mb-4">Your built-in coding companion.</p>
+<ul class="list-disc pl-6 space-y-1 mb-6 text-slate-300">
+    <li><strong>DeepSeek Integration:</strong> Powered by the localized DeepSeek-r1 model for private, high-performance inference.</li>
+    <li><strong>Context-Aware:</strong> Understands your project structure and actively learns from your workspace.</li>
+    <li><strong>Privacy-First:</strong> Run entirely offline with Ollama, keeping your code safe.</li>
+</ul>
+
+<h3 class="text-lg font-bold text-white mb-2 flex items-center gap-2">
+    <span class="material-symbols-outlined !text-[20px] text-blue-400">language</span> Web Scaler Agent
+</h3>
+<p class="mb-4">Turn the web into your dataset.</p>
+<ul class="list-disc pl-6 space-y-1 mb-6 text-slate-300">
+    <li><strong>Intelligent Scraping:</strong> Extract docs, tutorials, and stack overflow answers directly into your editor context.</li>
+    <li><strong>Seamless Integration:</strong> Scraped content is automatically fed into Antigravity AI for context-aware answers.</li>
+    <li><strong>Powered by Camel-AI/Owl:</strong> Advanced multi-modal web navigation agent.</li>
+</ul>
+
+<h3 class="text-lg font-bold text-white mb-2 flex items-center gap-2">
+    <span class="material-symbols-outlined !text-[20px] text-amber-400">bolt</span> Performance Optimized
+</h3>
+<ul class="list-disc pl-6 space-y-1 mb-6 text-slate-300">
+    <li><strong>Stripped & Polished:</strong> Telemetry removed, legacy bloatware stripped.</li>
+    <li><strong>Native Efficiency:</strong> Rebuilt native modules for maximum speed on Windows.</li>
+</ul>
+
+ <h2 class="text-2xl font-bold text-white border-b border-[#30363d] pb-2 mb-4 flex items-center gap-2">
+    <span class="material-symbols-outlined !text-[24px] text-emerald-500">download</span> Download
+</h2>
+<p class="mb-4">Get the latest version from our <a href="#" class="text-primary hover:underline">Releases Page</a>.</p>
+<p class="font-bold mb-2">Supported Platforms:</p>
+<ul class="list-disc pl-6 space-y-1 mb-6 text-slate-300">
+    <li>Windows 10/11 (x64)</li>
+    <li>Linux (.deb/.rpm) - <em>Coming Soon</em></li>
+    <li>macOS (Apple Silicon) - <em>Coming Soon</em></li>
+</ul>
+
+<h2 class="text-2xl font-bold text-white border-b border-[#30363d] pb-2 mb-4 flex items-center gap-2">
+    <span class="material-symbols-outlined !text-[24px] text-slate-400">build</span> Installation
+</h2>
+<div class="bg-[#161b22] p-4 rounded-lg border border-[#30363d] font-mono text-sm mb-6">
+    <p class="text-slate-400 mb-2">1. Download the installer ( <span class="text-white">QuantaCodeSetup-x64.exe</span> ).</p>
+    <p class="text-slate-400 mb-2">2. Run the installer and accept the EULA.</p>
+    <p class="text-slate-400">3. Start coding!</p>
+</div>
+
+ <h2 class="text-2xl font-bold text-white border-b border-[#30363d] pb-2 mb-4 flex items-center gap-2">
+    <span class="material-symbols-outlined !text-[24px] text-amber-600">terminal</span> For Developers
+</h2>
+<p class="mb-2">Want to build from source?</p>
+<div class="bg-[#161b22] p-4 rounded-lg border border-[#30363d] font-mono text-sm mb-6 relative group">
+    <button class="absolute top-4 right-4 text-slate-500 hover:text-white"><span class="material-symbols-outlined !text-[16px]">content_copy</span></button>
+    <div class="text-slate-300">
+        <span class="text-primary">git clone</span> https://github.com/QuantaForge-trackcodex/quantacode.git<br/>
+        <span class="text-primary">cd</span> quantacode<br/>
+        ./scripts/clone-and-setup.ps1
+    </div>
+</div>
+
+ <h2 class="text-2xl font-bold text-white border-b border-[#30363d] pb-2 mb-4 flex items-center gap-2">
+    <span class="material-symbols-outlined !text-[24px] text-orange-400">balance</span> License
+</h2>
+<p class="mb-4">QuantaCode is distributed under the MIT License. Copyright (c) 2026 QuantaForge LLC.</p>
+<p class="text-xs text-slate-500">Based on Visual Studio Code Open Source (Code-OSS) by Microsoft.</p>
+`
   },
   {
     id: 'dashboard-ui',
@@ -198,7 +289,6 @@ export const MOCK_JOBS: Job[] = [
     id: 'job-1',
     title: 'DeFi Protocol Security Audit',
     description: 'Perform a comprehensive security audit on our upcoming DeFi lending protocol built on Solana.',
-    longDescription: 'We are seeking a senior security engineer to perform a 2-week intensive audit of our Solana smart contracts. Focus areas include liquidations logic, oracle integration, and flash loan prevention. You will be working directly with our lead developer in a dedicated workspace.',
     budget: '$8,500',
     type: 'Contract',
     status: 'Open',
@@ -214,10 +304,9 @@ export const MOCK_JOBS: Job[] = [
     id: 'job-2',
     title: 'React Performance Optimization',
     description: 'Optimize a data-heavy analytics dashboard to reduce bundle size and improve TTI.',
-    longDescription: 'Our main dashboard has grown too complex. We need a React expert to implement code-splitting, optimize memoization, and refactor expensive computations to web workers. The project uses Recharts and Tailwind CSS.',
     budget: '$3,200',
     type: 'Gig',
-    status: 'In Progress',
+    status: 'InProgress',
     techStack: ['React', 'TypeScript', 'Performance'],
     repoId: 'dashboard-ui',
     creator: {
@@ -254,146 +343,230 @@ export const MOCK_ORGANIZATIONS: Organization[] = [
 // --- NEW HIRING & GROWTH MOCK DATA ---
 
 export const MOCK_CANDIDATES: Candidate[] = [
-    { 
-        id: 'jane-doe', 
-        name: 'Jane Doe', 
-        role: 'Senior Software Engineer Applicant',
-        location: 'San Francisco, CA',
-        avatar: 'https://picsum.photos/seed/janedoe/64', 
-        aiComplexityScore: 92,
-        codeReplayUrl: '#',
-        techScore: 94,
-        cultureFit: 88,
-        complexity: 'High',
-        experience: '8y+',
-        technicalEvidence: [
-            { title: 'Refactored Middleware Logic', description: 'Replaced nested callbacks with clean async/await patterns and error handlers.', complexity: 94, quality: 96, timestamp: '00:42:16' },
-            { title: 'Database Schema Optimization', description: 'Identified and fixed a critical N+1 query issue in the data fetching layer.', complexity: 88, quality: 92, timestamp: '01:16:02' }
-        ],
-        linesChanged: { added: 482, removed: 24 },
-        testingCoverage: 92,
-        maintainability: 'A+',
-        qualitativeNotes: [
-            { author: 'Sarah Chen', avatar: 'https://picsum.photos/seed/sarah/64', rating: 5, note: 'Deep understanding of distributed systems. She just didn’t solve the coding prompt, she discussed architectural tradeoffs for production.', tags: ['Architecture', 'Leadership'], strengths: ['Highly articulate about technical tradeoffs', 'Proactive mentoring mindset'], potentials: ['Limited experience with Kubernetes'] }
-        ]
-    },
-    { 
-        id: 'alex-chen', 
-        name: 'Alex Chen', 
-        role: 'Staff Engineer @ TechFlow',
-        avatar: 'https://picsum.photos/seed/alexchen/64', 
-        aiComplexityScore: 88,
-        aiComplexityDepth: 'High Depth',
-        codeReplayUrl: '#',
-        prQuality: 94,
-        status: 'Top Match',
-        codeReplayHighlights: ['Refactored with logic from O(n) to O(1) during live session.'],
-        interviewerSentiment: 4.8,
-        techStackMatch: [{ skill: 'Go', alignment: 95 }, { skill: 'K8s', alignment: 80 }, { skill: 'Redis', alignment: 98 }],
-        trialPRLink: '#402',
-        decision: 'Extend Offer'
-    },
-    { 
-        id: 'sarah-smith', 
-        name: 'Sarah Smith', 
-        role: 'Sr. Backend @ Cloudscale',
-        avatar: 'https://picsum.photos/seed/sarahsmith/64', 
-        aiComplexityScore: 94,
-        aiComplexityDepth: 'Elite',
-        codeReplayUrl: '#',
-        prQuality: 92,
-        status: 'Passing',
-        codeReplayHighlights: ['Optimized Postgres queries with intelligent indexing.', 'Integrated Redis caching for hot path calls.'],
-        interviewerSentiment: 4.9,
-        techStackMatch: [{ skill: 'Go', alignment: 100 }, { skill: 'K8s', alignment: 90 }, { skill: 'Redis', alignment: 95 }],
-        trialPRLink: '#415',
-        decision: 'Schedule Final'
-    },
-     { 
-        id: 'jordan-lee', 
-        name: 'Jordan Lee', 
-        role: 'Lead Dev @ DataPulse',
-        avatar: 'https://picsum.photos/seed/jordanlee/64', 
-        aiComplexityScore: 85,
-        aiComplexityDepth: 'Standard',
-        codeReplayUrl: '#',
-        prQuality: 88,
-        status: 'Archived',
-        codeReplayHighlights: ['Followed standard MVC patterns consistently.'],
-        interviewerSentiment: 3.8,
-        techStackMatch: [{ skill: 'Go', alignment: 80 }, { skill: 'Docker', alignment: 90 }],
-        trialPRLink: '#389',
-        decision: 'Archive'
-    }
+  {
+    id: 'jane-doe',
+    name: 'Jane Doe',
+    role: 'Senior Software Engineer Applicant',
+    location: 'San Francisco, CA',
+    avatar: 'https://picsum.photos/seed/janedoe/64',
+    aiComplexityScore: 92,
+    codeReplayUrl: '#',
+    techScore: 94,
+    cultureFit: 88,
+    complexity: 'High',
+    experience: '8y+',
+    technicalEvidence: [
+      { title: 'Refactored Middleware Logic', description: 'Replaced nested callbacks with clean async/await patterns and error handlers.', complexity: 94, quality: 96, timestamp: '00:42:16' },
+      { title: 'Database Schema Optimization', description: 'Identified and fixed a critical N+1 query issue in the data fetching layer.', complexity: 88, quality: 92, timestamp: '01:16:02' }
+    ],
+    linesChanged: { added: 482, removed: 24 },
+    testingCoverage: 92,
+    maintainability: 'A+',
+    qualitativeNotes: [
+      { author: 'Sarah Chen', avatar: 'https://picsum.photos/seed/sarah/64', rating: 5, note: 'Deep understanding of distributed systems. She just didn’t solve the coding prompt, she discussed architectural tradeoffs for production.', tags: ['Architecture', 'Leadership'], strengths: ['Highly articulate about technical tradeoffs', 'Proactive mentoring mindset'], potentials: ['Limited experience with Kubernetes'] }
+    ]
+  },
+  {
+    id: 'alex-chen',
+    name: 'Alex Chen',
+    role: 'Staff Engineer @ TechFlow',
+    avatar: 'https://picsum.photos/seed/alexchen/64',
+    aiComplexityScore: 88,
+    aiComplexityDepth: 'High Depth',
+    codeReplayUrl: '#',
+    prQuality: 94,
+    status: 'Top Match',
+    codeReplayHighlights: ['Refactored with logic from O(n) to O(1) during live session.'],
+    interviewerSentiment: 4.8,
+    techStackMatch: [{ skill: 'Go', alignment: 95 }, { skill: 'K8s', alignment: 80 }, { skill: 'Redis', alignment: 98 }],
+    trialPRLink: '#402',
+    decision: 'Extend Offer'
+  },
+  {
+    id: 'sarah-smith',
+    name: 'Sarah Smith',
+    role: 'Sr. Backend @ Cloudscale',
+    avatar: 'https://picsum.photos/seed/sarahsmith/64',
+    aiComplexityScore: 94,
+    aiComplexityDepth: 'Elite',
+    codeReplayUrl: '#',
+    prQuality: 92,
+    status: 'Passing',
+    codeReplayHighlights: ['Optimized Postgres queries with intelligent indexing.', 'Integrated Redis caching for hot path calls.'],
+    interviewerSentiment: 4.9,
+    techStackMatch: [{ skill: 'Go', alignment: 100 }, { skill: 'K8s', alignment: 90 }, { skill: 'Redis', alignment: 95 }],
+    trialPRLink: '#415',
+    decision: 'Schedule Final'
+  },
+  {
+    id: 'jordan-lee',
+    name: 'Jordan Lee',
+    role: 'Lead Dev @ DataPulse',
+    avatar: 'https://picsum.photos/seed/jordanlee/64',
+    aiComplexityScore: 85,
+    aiComplexityDepth: 'Standard',
+    codeReplayUrl: '#',
+    prQuality: 88,
+    status: 'Archived',
+    codeReplayHighlights: ['Followed standard MVC patterns consistently.'],
+    interviewerSentiment: 3.8,
+    techStackMatch: [{ skill: 'Go', alignment: 80 }, { skill: 'Docker', alignment: 90 }],
+    trialPRLink: '#389',
+    decision: 'Archive'
+  }
 ];
 
 
 export const MOCK_TRIAL_REPOS: TrialRepo[] = [
-    {
-        id: 'trial-1',
-        title: 'Senior Backend Engineer',
-        company: 'Stripe',
-        location: 'Remote, Global',
-        salaryRange: '$180k - $240k',
-        status: 'Newly Active',
-        description: 'Refactor the Rate Limiter in the Go SDK',
-        challenges: ['Implement a fixed window strategy for traffic management.', 'Ensure zero-downtime and maintain backwards compatibility.'],
-        tech: ['Go', 'Redis', 'gRPC'],
-        deployments: 12,
-        coverage: 98,
-        avgPrReview: '45m',
-        logo: 'https://cdn.worldvectorlogo.com/logos/stripe-2.svg',
-    },
-    {
-        id: 'trial-2',
-        title: 'Core Systems Engineer',
-        company: 'Vercel',
-        location: 'SF / Remote',
-        salaryRange: '$200k - $280k',
-        status: 'Updated',
-        description: 'Optimize Edge Function Cold Starts via WASM',
-        challenges: ['Analyze current boot times using internal telemetry.', 'Implement a pre-warming strategy for WASM modules in the Edge Runtime.'],
-        tech: ['Rust', 'WASM', 'Node.js'],
-        deployments: 8,
-        coverage: 99,
-        avgPrReview: '15m',
-        logo: 'https://cdn.worldvectorlogo.com/logos/vercel.svg',
-    },
-    {
-        id: 'trial-3',
-        title: 'Platform Engineer (K8s)',
-        company: 'Monzo',
-        location: 'London / Remote',
-        salaryRange: '£110k - £160k',
-        status: 'Updated',
-        description: 'Hardening Multi-cluster mTLS Auth',
-        challenges: ['Identify and fix a race condition in the Istio-based certificate rotation service.', 'Improve observability by adding Prometheus metrics.'],
-        tech: ['Kubernetes', 'AWS', 'Istio'],
-        deployments: 4,
-        coverage: 100,
-        avgPrReview: '2h',
-        logo: 'https://cdn.worldvectorlogo.com/logos/monzo-2.svg',
-    },
+  {
+    id: 'trial-1',
+    title: 'Senior Billing Engineer',
+    company: 'Stripe',
+    location: 'Remote',
+    salaryRange: '$180k - $240k',
+    status: 'Newly Active',
+    description: 'Implement idempotency keys for terminal reader connections.',
+    challenges: [],
+    tech: ['TypeScript', 'React', 'API Design'],
+    deployments: 0,
+    coverage: 0,
+    avgPrReview: '0m',
+    logo: 'https://cdn.worldvectorlogo.com/logos/stripe-2.svg',
+    repoName: 'stripe/stripe-terminal-js'
+  },
+  {
+    id: 'trial-2',
+    title: 'Platform Integrity Engineer',
+    company: 'Netflix',
+    location: 'Los Gatos, CA',
+    salaryRange: '$220k - $310k',
+    status: 'Updated',
+    description: 'Optimize circuit breaker timeout propagation for 5G edge cases.',
+    challenges: [],
+    tech: ['Java', 'Spring', 'Distributed Systems'],
+    deployments: 0,
+    coverage: 0,
+    avgPrReview: '0m',
+    logo: 'https://cdn.worldvectorlogo.com/logos/netflix-3.svg',
+    repoName: 'Netflix/Hystrix'
+  },
+  {
+    id: 'trial-3',
+    title: 'Frontend Infra Architect',
+    company: 'Vercel',
+    location: 'San Francisco, CA',
+    salaryRange: '$160k - $210k',
+    status: 'Updated',
+    description: 'Refactor middleware runtime to support edge-cached WASM assets.',
+    challenges: [],
+    tech: ['Rust', 'Go', 'Next.js'],
+    deployments: 0,
+    coverage: 0,
+    avgPrReview: '0m',
+    logo: 'https://cdn.worldvectorlogo.com/logos/vercel.svg',
+    repoName: 'vercel/next.js'
+  },
+  {
+    id: 'trial-4',
+    title: 'Systems Security Lead',
+    company: 'Airbnb',
+    location: 'Remote',
+    salaryRange: '$195k - $265k',
+    status: 'Newly Active',
+    description: 'Implement strict CSP policy enforcement across legacy modules.',
+    challenges: [],
+    tech: ['Node.js', 'Security', 'React'],
+    deployments: 0,
+    coverage: 0,
+    avgPrReview: '0m',
+    logo: 'https://cdn.worldvectorlogo.com/logos/airbnb.svg',
+    repoName: 'airbnb/javascript'
+  },
+  {
+    id: 'trial-5',
+    title: 'Site Reliability Engineer',
+    company: 'Datadog',
+    location: 'Paris, FR',
+    salaryRange: '$175k - $225k',
+    status: 'Updated',
+    description: 'Optimize trace aggregation overhead in high-throughput nodes.',
+    challenges: [],
+    tech: ['Golang', 'K8s', 'Datadog'],
+    deployments: 0,
+    coverage: 0,
+    avgPrReview: '0m',
+    logo: 'https://dashboard.snapcraft.io/site_media/appmedia/2021/01/datadog-agent-icon-256x256_5yT1F6E.png',
+    repoName: 'DataDog/dd-trace-js'
+  },
+  {
+    id: 'trial-6',
+    title: 'Backend Core Engineer',
+    company: 'Uber',
+    location: 'Amsterdam, NL',
+    salaryRange: '$210k - $280k',
+    status: 'Newly Active',
+    description: 'Implement dynamic theme-switching engine for accessibility.',
+    challenges: [],
+    tech: ['React', 'Styletron', 'A11y'],
+    deployments: 0,
+    coverage: 0,
+    avgPrReview: '0m',
+    logo: 'https://cdn.worldvectorlogo.com/logos/uber-2.svg',
+    repoName: 'uber/baseui'
+  }
 ];
 
 export const MOCK_GROWTH_DATA = {
-    skillRadar: [
-        { subject: 'System Design', score: 85, fullMark: 100 },
-        { subject: 'Frontend', score: 70, fullMark: 100 },
-        { subject: 'Backend', score: 90, fullMark: 100 },
-        { subject: 'Security', score: 95, fullMark: 100 },
-        { subject: 'Leadership', score: 75, fullMark: 100 },
-    ] as SkillRadarData[],
-    growthPath: [
-        { skill: 'Kubernetes', category: 'DevOps', currentProficiency: 75, targetLevel: 'Staff Engineer', recommendation: 'Level Up Soon' },
-        { skill: 'GraphQL', category: 'API', currentProficiency: 45, targetLevel: 'Intermediate', recommendation: 'View Internal Docs' },
-        { skill: 'Cybersecurity', category: 'Security', currentProficiency: 88, targetLevel: 'Advanced', recommendation: 'Exam Prep' }
-    ] as GrowthPathItem[],
+  skillRadar: [
+    { subject: 'System Design', score: 85, fullMark: 100 },
+    { subject: 'Frontend', score: 70, fullMark: 100 },
+    { subject: 'Backend', score: 90, fullMark: 100 },
+    { subject: 'Security', score: 95, fullMark: 100 },
+    { subject: 'Leadership', score: 75, fullMark: 100 },
+  ] as SkillRadarData[],
+  growthPath: [
+    { skill: 'Kubernetes', category: 'DevOps', currentProficiency: 75, targetLevel: 'Staff Engineer', recommendation: 'Level Up Soon' },
+    { skill: 'GraphQL', category: 'API', currentProficiency: 45, targetLevel: 'Intermediate', recommendation: 'View Internal Docs' },
+    { skill: 'Cybersecurity', category: 'Security', currentProficiency: 88, targetLevel: 'Advanced', recommendation: 'Exam Prep' }
+  ] as GrowthPathItem[],
 };
 
 export const MOCK_ONBOARDING_TASKS: OnboardingTask[] = [
-    { id: '1', title: 'Request SSH keys & VPN access', description: 'Completed 2 days ago', status: 'completed', type: 'required' },
-    { id: '2', title: 'Local environment setup (Docker & Node v20)', description: 'Priority: High', status: 'pending', type: 'priority' },
-    { id: '3', title: 'Initial commit to personal sandbox repo', description: 'Due by Friday', status: 'pending', type: 'goal' },
-    { id: '4', title: 'Join #eng-general and introduce yourself', description: 'Social goal', status: 'pending', type: 'social' },
+  { id: '1', title: 'Request SSH keys & VPN access', description: 'Completed 2 days ago', status: 'completed', type: 'required' },
+  { id: '2', title: 'Local environment setup (Docker & Node v20)', description: 'Priority: High', status: 'pending', type: 'priority' },
+  { id: '3', title: 'Initial commit to personal sandbox repo', description: 'Due by Friday', status: 'pending', type: 'goal' },
+  { id: '4', title: 'Join #eng-general and introduce yourself', description: 'Social goal', status: 'pending', type: 'social' },
+];
+
+// --- IDE ECOSYSTEM MOCK DATA ---
+
+export const MOCK_EXTENSIONS = [
+  { id: 'py', name: 'Python', publisher: 'Microsoft', version: '2024.2.0', downloads: '102M', icon: 'https://raw.githubusercontent.com/github/explore/80688e429a7d4ef2fca1e82350fe8e3517d3494d/topics/python/python.png', description: 'IntelliSense, Linting, Debugging (multi-threaded, remote), Jupyter Notebooks, code formatting, refactoring, unit tests, and more.' },
+  { id: 'eslint', name: 'ESLint', publisher: 'Microsoft', version: '2.4.2', downloads: '34M', icon: 'https://raw.githubusercontent.com/github/explore/80688e429a7d4ef2fca1e82350fe8e3517d3494d/topics/eslint/eslint.png', description: 'Integrates ESLint into VS Code.' },
+  { id: 'prettier', name: 'Prettier - Code formatter', publisher: 'Prettier', version: '10.1.0', downloads: '42M', icon: 'https://raw.githubusercontent.com/github/explore/80688e429a7d4ef2fca1e82350fe8e3517d3494d/topics/prettier/prettier.png', description: 'Code formatter using prettier' },
+  { id: 'copilot', name: 'GitHub Copilot', publisher: 'GitHub', version: '1.143.0', downloads: '12M', icon: 'https://github.githubassets.com/assets/copilot-logo-6c617132848e.svg', description: 'Your AI pair programmer.' },
+  { id: 'docker', name: 'Docker', publisher: 'Microsoft', version: '1.29.0', downloads: '28M', icon: 'https://raw.githubusercontent.com/github/explore/80688e429a7d4ef2fca1e82350fe8e3517d3494d/topics/docker/docker.png', description: 'Makes it easy to create, manage, and debug containerized applications.' },
+];
+
+export const MOCK_FILE_SYSTEM = [
+  {
+    id: 'root',
+    name: 'track-api-prod',
+    type: 'folder',
+    children: [
+      {
+        id: 'src',
+        name: 'src',
+        type: 'folder',
+        children: [
+          { id: 'main.cpp', name: 'main.cpp', type: 'file', language: 'cpp', content: '#include <iostream>\n\nint main() {\n    std::cout << "Hello TrackCodex!" << std::endl;\n    return 0;\n}' },
+          { id: 'utils.ts', name: 'utils.ts', type: 'file', language: 'typescript', content: 'export const add = (a: number, b: number) => a + b;' },
+          { id: 'server.go', name: 'server.go', type: 'file', language: 'go', content: 'package main\n\nimport "fmt"\n\nfunc main() {\n\tfmt.Println("Server running...")\n}' },
+        ]
+      },
+      { id: 'README.md', name: 'README.md', type: 'file', language: 'markdown', content: '# TrackCodex API\n\nProduction backend service.' },
+      { id: '.gitignore', name: '.gitignore', type: 'file', language: 'plaintext', content: 'node_modules\ndist\n.env' },
+      { id: 'package.json', name: 'package.json', type: 'file', language: 'json', content: '{\n  "name": "track-api",\n  "version": "1.0.0"\n}' }
+    ]
+  }
 ];

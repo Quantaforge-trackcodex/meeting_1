@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { profileService, UserProfile } from '../../services/profile';
+import { useAuth } from '../../context/AuthContext';
 
 // Reusable component for settings sections
-// Fix: Changed component props to use React.PropsWithChildren to correctly type a component that accepts children. This resolves the TypeScript errors on lines 62, 81, and 106.
 const SettingsSection = ({ title, description, children }: React.PropsWithChildren<{ title: string, description: string }>) => (
   <section className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-8 border-t border-gh-border first:pt-0 first:border-0">
     <div className="md:col-span-1">
@@ -16,6 +16,7 @@ const SettingsSection = ({ title, description, children }: React.PropsWithChildr
 );
 
 const ProfileSettings = () => {
+  const { logout } = useAuth();
   const [profile, setProfile] = useState<UserProfile>(() => profileService.getProfile());
   const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -28,7 +29,7 @@ const ProfileSettings = () => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setProfile({ ...profile, [e.target.name]: e.target.value });
   };
-  
+
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -53,11 +54,20 @@ const ProfileSettings = () => {
 
   return (
     <div className="space-y-10">
-      <header className="border-b border-gh-border pb-6">
-        <h1 className="text-2xl font-black text-white tracking-tight">Public Profile</h1>
-        <p className="text-sm text-gh-text-secondary mt-1 leading-relaxed">
-          This is how others will see you on the platform. Customize your public presence.
-        </p>
+      <header className="border-b border-gh-border pb-6 flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-black text-white tracking-tight">Public Profile</h1>
+          <p className="text-sm text-gh-text-secondary mt-1 leading-relaxed">
+            This is how others will see you on the platform. Customize your public presence.
+          </p>
+        </div>
+        <button
+          onClick={logout}
+          className="px-4 py-2 bg-[#21262d] hover:bg-rose-500/10 hover:text-rose-500 hover:border-rose-500/50 border border-gh-border text-gh-text rounded-lg text-xs font-bold transition-all flex items-center gap-2"
+        >
+          <span className="material-symbols-outlined !text-[16px]">logout</span>
+          Sign Out
+        </button>
       </header>
 
       <SettingsSection
@@ -78,7 +88,7 @@ const ProfileSettings = () => {
           </div>
         </div>
       </SettingsSection>
-      
+
       <SettingsSection
         title="Profile Details"
         description="Basic information about you."
@@ -100,9 +110,9 @@ const ProfileSettings = () => {
             onChange={handleChange}
             className="mt-1 w-full bg-gh-bg border border-gh-border rounded-lg px-3 py-2 text-sm text-white focus:ring-1 focus:ring-primary outline-none"
           />
-           <p className="mt-2 text-xs text-gh-text-secondary">
-             Changing your username can have <span className="text-rose-500 font-medium">unintended side effects</span>.
-           </p>
+          <p className="mt-2 text-xs text-gh-text-secondary">
+            Changing your username can have <span className="text-rose-500 font-medium">unintended side effects</span>.
+          </p>
         </div>
         <div>
           <label className="text-xs font-bold text-gh-text-secondary">Bio</label>
@@ -133,6 +143,20 @@ const ProfileSettings = () => {
           <div className="flex items-center mt-1">
             <span className="px-3 py-2 bg-gh-bg border border-r-0 border-gh-border rounded-l-lg text-sm text-gh-text-secondary">https://</span>
             <input name="website" value={profile.website} onChange={handleChange} className="w-full bg-gh-bg border border-gh-border rounded-r-lg px-3 py-2 text-sm text-white" />
+          </div>
+        </div>
+        <div>
+          <label className="text-xs font-bold text-gh-text-secondary">LinkedIn</label>
+          <div className="flex items-center mt-1">
+            <span className="px-3 py-2 bg-gh-bg border border-r-0 border-gh-border rounded-l-lg text-sm text-gh-text-secondary">linkedin.com/</span>
+            <input name="linkedinUrl" value={profile.linkedinUrl || ''} onChange={handleChange} className="w-full bg-gh-bg border border-gh-border rounded-r-lg px-3 py-2 text-sm text-white" placeholder="in/username" />
+          </div>
+        </div>
+        <div>
+          <label className="text-xs font-bold text-gh-text-secondary">Reddit</label>
+          <div className="flex items-center mt-1">
+            <span className="px-3 py-2 bg-gh-bg border border-r-0 border-gh-border rounded-l-lg text-sm text-gh-text-secondary">reddit.com/</span>
+            <input name="redditUrl" value={profile.redditUrl || ''} onChange={handleChange} className="w-full bg-gh-bg border border-gh-border rounded-r-lg px-3 py-2 text-sm text-white" placeholder="u/username" />
           </div>
         </div>
       </SettingsSection>

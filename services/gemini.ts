@@ -4,10 +4,9 @@ export const forgeAIService = {
   async getCodeRefactorSuggestion(code: string, fileName: string) {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
+      model: 'gemini-1.5-pro',
       contents: `Analyze the following code from ${fileName} and suggest a specific optimization or refactor using modern patterns. Provide the explanation and a diff-like snippet.\n\nCODE:\n${code}`,
       config: {
-        thinkingConfig: { thinkingBudget: 2048 }
       }
     });
     return response.text;
@@ -16,7 +15,7 @@ export const forgeAIService = {
   async getAICompletion(prefix: string, suffix: string, fileName: string) {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-1.5-flash',
       contents: `You are an AI code completion engine. Complete the code for file "${fileName}". 
       
       CODE BEFORE CURSOR:
@@ -33,7 +32,7 @@ export const forgeAIService = {
   async getTechnicalAnswer(question: string, codeContext: string, fileName: string) {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
+      model: 'gemini-1.5-pro',
       contents: `You are ForgeAI, an expert technical co-pilot. 
       File Context (${fileName}):
       \`\`\`
@@ -44,7 +43,6 @@ export const forgeAIService = {
 
       Provide a deep, technical, and helpful response. Use markdown formatting.`,
       config: {
-        thinkingConfig: { thinkingBudget: 2048 }
       }
     });
     return response.text;
@@ -53,7 +51,7 @@ export const forgeAIService = {
   async getCodeReview(code: string, fileName: string) {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
+      model: 'gemini-1.5-pro',
       contents: `Perform a comprehensive technical code review for the file "${fileName}".
       
       CODE:
@@ -76,7 +74,7 @@ export const forgeAIService = {
   async getSecurityFix(vulnerability: string, codeSnippet: string) {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
+      model: 'gemini-1.5-pro',
       contents: `As a security expert, fix this vulnerability: ${vulnerability}.\n\nSnippet:\n${codeSnippet}\n\nProvide the explanation and the corrected code.`,
       config: {
         thinkingConfig: { thinkingBudget: 4096 }
@@ -88,7 +86,7 @@ export const forgeAIService = {
   async summarizeRepoActivity(commits: string[]) {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-1.5-flash',
       contents: `Summarize the following repository activities in a brief, professional paragraph for a dashboard:\n\n${commits.join('\n')}`,
     });
     return response.text;
@@ -97,7 +95,7 @@ export const forgeAIService = {
   async checkContentSafety(title: string, content: string): Promise<{ status: 'SAFE' | 'WARNING' | 'FLAGGED'; reason?: string }> {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-1.5-flash',
       contents: `Analyze this community post for safety, professionalism, and spam.
       Title: "${title}"
       Content: "${content}"
@@ -130,9 +128,9 @@ export const forgeAIService = {
   async getLiveChatResponse(message: string, history: { sender: string; text: string }[], sessionContext: string, participants: string[]) {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const historyString = history.map(m => `${m.sender}: ${m.text}`).join('\n');
-    
+
     const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
+      model: 'gemini-1.5-pro',
       contents: `You are ForgeAI, an advanced engineering co-pilot integrated into a live developer collaboration session. 
       
       SESSION CONTEXT: ${sessionContext}

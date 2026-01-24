@@ -1,112 +1,76 @@
 
-import React, { useState, useMemo } from 'react';
+import React from 'react';
 import { MOCK_TRIAL_REPOS } from '../../constants';
 import { TrialRepo } from '../../types';
 
-// Helper function to extract the max salary for sorting
-const getMaxSalary = (salaryRange: string): number => {
-    // Finds the last number in a string like "$180k - $240k" or "£160k"
-    const numbers = salaryRange.match(/[\d,.]+/g);
-    if (!numbers) return 0;
-    
-    const lastNumberStr = numbers[numbers.length - 1].replace(/,/g, '');
-    let value = parseFloat(lastNumberStr);
-
-    if (salaryRange.toLowerCase().includes('k')) {
-        value *= 1000;
-    }
-
-    return value;
-};
-
-// FIX: Changed component to React.FC to correctly handle the 'key' prop when used in a list.
 const TrialCard: React.FC<{ trial: TrialRepo }> = ({ trial }) => {
-    const isStripe = trial.company === 'Stripe';
-
     return (
-        <div className="bg-gh-bg-secondary border border-gh-border rounded-2xl p-6 flex flex-col group hover:border-gh-text-secondary transition-all shadow-md hover:shadow-xl">
-            <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-4">
-                    <div className="size-10 bg-gh-bg border border-gh-border rounded-lg flex items-center justify-center p-1">
-                        {isStripe ? (
-                            <div className="size-full bg-[#008cdd] rounded-md flex items-center justify-center text-white text-2xl font-black">S</div>
-                        ) : (
-                            <img src={trial.logo} className="h-full w-auto object-contain invert-[.85]" alt={trial.company} />
-                        )}
-                    </div>
-                    <div>
-                        <h3 className="font-bold text-white group-hover:text-primary transition-colors text-base">{trial.title}</h3>
-                        <p className="text-xs text-slate-400">{trial.company} • {trial.location} • {trial.salaryRange}</p>
-                    </div>
+        <div className="bg-[#161b22] border border-[#30363d] rounded-xl p-6 flex flex-col relative group hover:border-[#58a6ff] transition-all duration-300">
+            {/* Header: Logo & Salary */}
+            <div className="flex justify-between items-start mb-5">
+                <div className="size-12 bg-white rounded-lg flex items-center justify-center p-2 shadow-sm overflow-hidden">
+                    <img
+                        src={trial.logo}
+                        className="w-full h-full object-contain"
+                        alt={trial.company}
+                    />
                 </div>
-                <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase border whitespace-nowrap ${trial.status === 'Newly Active' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'}`}>
-                    {trial.status.toUpperCase()}
-                </span>
+                <div className="px-3 py-1.5 bg-[#1f6feb]/15 text-[#58a6ff] text-[11px] font-bold rounded-full border border-[#1f6feb]/20 tracking-wide">
+                    {trial.salaryRange}
+                </div>
             </div>
 
-            <div className="my-4 flex-1">
-                <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Codebase Challenge</h4>
-                <p className="text-lg text-slate-200 font-medium">"{trial.description}"</p>
+            {/* Title & Location */}
+            <div className="mb-6">
+                <h3 className="text-lg font-bold text-white mb-1.5 tracking-tight group-hover:text-[#58a6ff] transition-colors">{trial.title}</h3>
+                <div className="text-[13px] text-[#8b949e] font-medium flex items-center gap-1.5">
+                    <span className="text-[#c9d1d9]">{trial.company}</span>
+                    <span className="text-[#30363d]">•</span>
+                    <span>{trial.location}</span>
+                </div>
             </div>
-            
-            <div className="flex flex-wrap gap-2 my-4">
-                {trial.tech.map(t => <span key={t} className="px-2 py-1 text-[11px] bg-gh-bg border border-gh-border rounded font-bold text-slate-400">{t}</span>)}
+
+            {/* Repo & Mission */}
+            <div className="mb-6 flex-1">
+                <div className="flex items-center gap-2 text-[#58a6ff] text-[13px] font-mono mb-3 opacity-90 hover:underline cursor-pointer">
+                    <span className="material-symbols-outlined !text-[16px] -mt-0.5">code</span>
+                    {trial.repoName || 'repo/unknown'}
+                </div>
+                <div className="p-4 bg-[#0d1117] border border-[#30363d] rounded-lg relative">
+                    <p className="text-[13px] text-[#c9d1d9] leading-relaxed italic font-medium">
+                        "{trial.description}"
+                    </p>
+                </div>
             </div>
-            
-            <div className="mt-auto pt-4 border-t border-gh-border flex items-center justify-start gap-3">
-                <button className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg shadow-lg shadow-emerald-500/10 transition-transform hover:scale-105 active:scale-100">Fork & Start Trial</button>
-                <button className="px-4 py-2 text-xs font-bold text-slate-300 border border-gh-border rounded-lg hover:border-slate-400 hover:bg-gh-bg">View Specs</button>
+
+            {/* Tags */}
+            <div className="flex flex-wrap gap-2 mb-6">
+                {trial.tech.map(t => (
+                    <span key={t} className="px-2.5 py-1 bg-[#21262d] border border-[#30363d] text-[#8b949e] text-[11px] font-semibold rounded-md">
+                        {t}
+                    </span>
+                ))}
             </div>
+
+            {/* Action */}
+            <button className="w-full py-2.5 bg-[#238636] hover:bg-[#2ea043] text-white text-[13px] font-bold rounded-lg transition-all flex items-center justify-center gap-2 shadow-[0_1px_0_rgba(27,31,36,0.1)] hover:shadow-[0_1px_0_rgba(27,31,36,0.1),_inset_0_1px_0_rgba(255,255,255,0.03)] active:bg-[#238636]">
+                <span className="material-symbols-outlined !text-[18px] filled">play_arrow</span>
+                Start Trial
+            </button>
         </div>
     );
 };
 
 const TrialRepositoriesView = () => {
-    const [sortOrder, setSortOrder] = useState<'newest' | 'highestPay'>('newest');
-
-    const sortedTrials = useMemo(() => {
-        const trialsCopy = [...MOCK_TRIAL_REPOS];
-        if (sortOrder === 'newest') {
-            // Sort 'Newly Active' before 'Updated'
-            return trialsCopy.sort((a, b) => {
-                if (a.status === 'Newly Active' && b.status !== 'Newly Active') return -1;
-                if (b.status === 'Newly Active' && a.status !== 'Newly Active') return 1;
-                return 0;
-            });
-        }
-        if (sortOrder === 'highestPay') {
-            return trialsCopy.sort((a, b) => getMaxSalary(b.salaryRange) - getMaxSalary(a.salaryRange));
-        }
-        return trialsCopy;
-    }, [sortOrder]);
-
     return (
-        <div className="p-8">
-            <div className="max-w-4xl mx-auto">
-                <div className="flex items-center justify-between mb-8">
-                    <div>
-                        <h2 className="text-3xl font-black text-white tracking-tight">Trial Repositories</h2>
-                        <p className="text-sm text-slate-400 mt-1">A real-world task to prove your skills. No algorithm puzzles allowed.</p>
-                    </div>
-                    <div className="flex items-center gap-2 p-1 rounded-lg bg-gh-bg-secondary border border-gh-border">
-                         <button 
-                            onClick={() => setSortOrder('newest')}
-                            className={`px-3 py-1 text-xs font-bold rounded-md transition-colors ${sortOrder === 'newest' ? 'bg-white/10 text-white' : 'text-slate-400 hover:bg-white/5'}`}
-                         >
-                            Sort: Newest
-                         </button>
-                         <button 
-                            onClick={() => setSortOrder('highestPay')}
-                            className={`px-3 py-1 text-xs font-bold rounded-md transition-colors ${sortOrder === 'highestPay' ? 'bg-white/10 text-white' : 'text-slate-400 hover:bg-white/5'}`}
-                         >
-                            Sort: Highest Pay
-                         </button>
-                    </div>
-                </div>
+        <div className="p-8 max-w-[1400px] mx-auto">
+            <div className="mb-10">
+                <h2 className="text-2xl font-bold text-white mb-2">Repo-Based Job Feed</h2>
+                <p className="text-[#8b949e] text-[15px]"> Prove your skills by solving real issues on enterprise repositories. Start a trial and get hired.</p>
+            </div>
 
-                <div className="space-y-6">
-                    {sortedTrials.map(trial => <TrialCard key={trial.id} trial={trial} />)}
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {MOCK_TRIAL_REPOS.map(trial => <TrialCard key={trial.id} trial={trial} />)}
             </div>
         </div>
     );
