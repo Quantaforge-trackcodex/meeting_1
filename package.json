@@ -17,7 +17,10 @@
     "build:backend": "node scripts/build-backend.js",
     "build:electron": "esbuild electron/main.ts electron/preload.ts --bundle --platform=node --format=esm --outdir=dist-electron --external:electron",
     "electron:dev": "npm run build:electron && electron dist-electron/main.js",
-    "dist": "npm run build && npm run build:backend && npm run build:electron && electron-builder"
+    "dist": "npm run build && npm run build:backend && npm run build:electron && electron-builder",
+    "dist:win": "npm run build && npm run build:backend && npm run build:electron && electron-builder --win",
+    "dist:mac": "npm run build && npm run build:backend && npm run build:electron && electron-builder --mac",
+    "dist:linux": "npm run build && npm run build:backend && npm run build:electron && electron-builder --linux"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
