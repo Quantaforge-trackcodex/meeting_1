@@ -1,0 +1,24 @@
+directories:
+  output: release
+  buildResources: build
+appId: com.quantaforge.trackcodex
+productName: TrackCodex
+files:
+  - filter:
+      - dist/**/*
+      - dist-backend/**/*
+      - dist-electron/**/*
+      - package.json
+      - node_modules/**/*
+win:
+  target: nsis
+mac:
+  target: dmg
+linux:
+  target: AppImage
+extraResources:
+  - from: backend/schema.prisma
+    to: backend/schema.prisma
+  - from: .env
+    to: .env
+electronVersion: 40.0.0

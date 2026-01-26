@@ -1,7 +1,7 @@
 
 import React from 'react';
-import { 
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
+import {
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
 import { MOCK_WORKSPACES, MOCK_AI_TASKS, MOCK_SESSIONS } from '../constants';
 import { useNavigate } from 'react-router-dom';
@@ -34,20 +34,20 @@ const Overview = () => {
   return (
     <div className="p-8 flex-1 overflow-y-auto custom-scrollbar bg-gh-bg font-display">
       <div className="max-w-[1400px] mx-auto animate-in fade-in duration-500">
-        
+
         <div className="flex items-center justify-between mb-8 pb-6 border-b border-gh-border">
-           <div>
-              <h1 className="text-2xl font-bold text-white tracking-tight">System Console</h1>
-              <p className="text-gh-text-secondary text-xs mt-1">Platform telemetry and infrastructure health metrics.</p>
-           </div>
-           <div className="flex items-center gap-3">
-              <button className="px-4 py-1.5 border border-gh-border bg-gh-bg-secondary text-gh-text hover:border-gh-text-secondary rounded-md text-xs font-bold transition-all">
-                Telemetry Log
-              </button>
-              <button onClick={() => navigate('/workspace/new')} className="px-4 py-1.5 bg-[#238636] hover:bg-[#2ea043] text-white rounded-md text-xs font-bold transition-all shadow-sm">
-                Provision Workspace
-              </button>
-           </div>
+          <div>
+            <h1 className="text-2xl font-bold text-white tracking-tight">System Console</h1>
+            <p className="text-gh-text-secondary text-xs mt-1">Platform telemetry and infrastructure health metrics.</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <button className="px-4 py-1.5 border border-gh-border bg-gh-bg-secondary text-gh-text hover:border-gh-text-secondary rounded-md text-xs font-bold transition-all">
+              Telemetry Log
+            </button>
+            <button onClick={() => navigate('/workspace/new')} className="px-4 py-1.5 bg-[#238636] hover:bg-[#2ea043] text-white rounded-md text-xs font-bold transition-all shadow-sm">
+              Provision Workspace
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -61,28 +61,28 @@ const Overview = () => {
           <div className="space-y-8">
             {/* System Performance Graph */}
             <section className="bg-gh-bg-secondary border border-gh-border rounded-xl p-6">
-               <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-xs font-bold uppercase text-gh-text-secondary tracking-widest">Global Activity Flux</h3>
-                  <div className="flex items-center gap-4 text-[10px] font-bold text-gh-text-secondary uppercase">
-                     <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-primary"></span> Commits</span>
-                     <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-emerald-500"></span> AI Tasks</span>
-                  </div>
-               </div>
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xs font-bold uppercase text-gh-text-secondary tracking-widest">Global Activity Flux</h3>
+                <div className="flex items-center gap-4 text-[10px] font-bold text-gh-text-secondary uppercase">
+                  <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-primary"></span> Commits</span>
+                  <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-emerald-500"></span> AI Tasks</span>
+                </div>
+              </div>
 
-               <div className="h-[280px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={activityData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#30363d" vertical={false} />
-                      <XAxis dataKey="name" stroke="#8b949e" fontSize={10} tickLine={false} axisLine={false} dy={10} />
-                      <YAxis stroke="#8b949e" fontSize={10} tickLine={false} axisLine={false} dx={-10} />
-                      <Tooltip 
-                        contentStyle={{ backgroundColor: '#161b22', borderColor: '#30363d', borderRadius: '6px', fontSize: '12px' }}
-                      />
-                      <Area type="monotone" dataKey="commits" stroke="#58a6ff" strokeWidth={2} fill="#58a6ff" fillOpacity={0.1} />
-                      <Area type="monotone" dataKey="ai" stroke="#3fb950" strokeWidth={2} fill="#3fb950" fillOpacity={0.1} />
-                    </AreaChart>
-                  </ResponsiveContainer>
-               </div>
+              <div className="h-[280px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={activityData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#30363d" vertical={false} />
+                    <XAxis dataKey="name" stroke="#8b949e" fontSize={10} tickLine={false} axisLine={false} dy={10} />
+                    <YAxis stroke="#8b949e" fontSize={10} tickLine={false} axisLine={false} dx={-10} />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: '#161b22', borderColor: '#30363d', borderRadius: '6px', fontSize: '12px' }}
+                    />
+                    <Area type="monotone" dataKey="commits" stroke="#58a6ff" strokeWidth={2} fill="#58a6ff" fillOpacity={0.1} />
+                    <Area type="monotone" dataKey="ai" stroke="#3fb950" strokeWidth={2} fill="#3fb950" fillOpacity={0.1} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
             </section>
 
             {/* Recent Workspaces Table */}
@@ -125,14 +125,14 @@ const Overview = () => {
           {/* Right Sidebar */}
           <div className="space-y-8">
             <section className="bg-gh-bg-secondary border border-gh-border rounded-xl p-6">
-               <h3 className="text-[11px] font-bold text-gh-text-secondary uppercase tracking-widest mb-4">Security Overview</h3>
-               <div className="flex flex-col items-center py-4">
-                  <div className="text-4xl font-black text-emerald-500">84%</div>
-                  <p className="text-[10px] text-gh-text-secondary font-bold uppercase mt-1">Platform Integrity</p>
-                  <div className="w-full h-1.5 bg-gh-bg rounded-full overflow-hidden mt-6">
-                     <div className="h-full bg-emerald-500 w-[84%]"></div>
-                  </div>
-               </div>
+              <h3 className="text-[11px] font-bold text-gh-text-secondary uppercase tracking-widest mb-4">Security Overview</h3>
+              <div className="flex flex-col items-center py-4">
+                <div className="text-4xl font-black text-emerald-500">84%</div>
+                <p className="text-[10px] text-gh-text-secondary font-bold uppercase mt-1">Platform Integrity</p>
+                <div className="w-full h-1.5 bg-gh-bg rounded-full overflow-hidden mt-6">
+                  <div className="h-full bg-emerald-500 w-[84%]"></div>
+                </div>
+              </div>
             </section>
 
             <section>

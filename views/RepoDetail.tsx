@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { MOCK_REPOS } from '../constants';
+import PostJobModal from '../components/jobs/PostJobModal';
 
 const RepoDetailView = () => {
   const { id } = useParams();
@@ -8,19 +9,31 @@ const RepoDetailView = () => {
   const repo = MOCK_REPOS.find(r => r.id === id) || MOCK_REPOS[0];
   const [activeTab, setActiveTab] = useState('Code');
 
+  const [isJobModalOpen, setIsJobModalOpen] = useState(false);
+
   // Minimal safe version without complex charts
   return (
-    <div className="font-display text-[#c9d1d9] h-full overflow-y-auto">
+    <div className="font-display text-[#c9d1d9] h-full overflow-y-auto relative">
       <div className="bg-[#161b22] border-b border-[#30363d] pt-4">
         <div className="max-w-[1400px] mx-auto px-8 mb-6">
-          <div className="flex items-center gap-3 mb-4">
-            <span className="material-symbols-outlined text-[#8b949e] !text-[20px]">book</span>
-            <div className="flex items-center gap-2 text-xl">
-              <span className="text-[#58a6ff] cursor-pointer" onClick={() => navigate('/repositories')}>track-codex</span>
-              <span className="text-[#8b949e]">/</span>
-              <span className="font-bold text-[#58a6ff]">{repo.name}</span>
-              <span className="px-2 py-0.5 rounded-full border border-[#30363d] text-[11px] font-bold text-[#8b949e] uppercase bg-[#1c2128] ml-2">{repo.visibility}</span>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <span className="material-symbols-outlined text-[#8b949e] !text-[20px]">book</span>
+              <div className="flex items-center gap-2 text-xl">
+                <span className="text-[#58a6ff] cursor-pointer" onClick={() => navigate('/repositories')}>track-codex</span>
+                <span className="text-[#8b949e]">/</span>
+                <span className="font-bold text-[#58a6ff]">{repo.name}</span>
+                <span className="px-2 py-0.5 rounded-full border border-[#30363d] text-[11px] font-bold text-[#8b949e] uppercase bg-[#1c2128] ml-2">{repo.visibility}</span>
+              </div>
             </div>
+
+            <button
+              onClick={() => setIsJobModalOpen(true)}
+              className="flex items-center gap-2 px-3 py-1.5 bg-[#1f6feb] hover:bg-[#388bfd] text-white rounded-md text-sm font-bold transition-colors shadow-sm"
+            >
+              <span className="material-symbols-outlined !text-[18px]">person_add</span>
+              Hire Expert
+            </button>
           </div>
 
           <div className="flex gap-2 mt-4 text-sm font-medium text-[#8b949e]">
@@ -50,6 +63,13 @@ const RepoDetailView = () => {
           </button>
         </div>
       </div>
+
+      <PostJobModal
+        isOpen={isJobModalOpen}
+        onClose={() => setIsJobModalOpen(false)}
+        onSubmit={(job) => console.log("Job Created", job)}
+        initialData={{ repoId: repo.id, description: `Hiring an expert for ${repo.name} repository tasks.` }}
+      />
     </div>
   );
 };

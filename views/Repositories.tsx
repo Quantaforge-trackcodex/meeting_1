@@ -3,7 +3,7 @@ import { MOCK_REPOS } from '../constants';
 import { useNavigate } from 'react-router-dom';
 import { Repository } from '../types';
 import CreateRepoModal from '../components/repositories/CreateRepoModal';
-import { githubService } from '../services/github';
+import { githubService, GitHubRepo } from '../services/github';
 
 const AIHealthIndicator = ({ score, label }: { score: string; label: string }) => {
   const getColors = () => {
@@ -60,10 +60,9 @@ const Repositories = () => {
         const token = localStorage.getItem('trackcodex_github_token');
         if (token) {
           try {
-            // This import will be moved to the top level in a separate step
-            const { githubService } = await import('../services/github');
+            // Load from GitHub via static import
             const ghRepos = await githubService.getRepos(token);
-            const formattedGhRepos = ghRepos.map((r: any) => ({
+            const formattedGhRepos = ghRepos.map((r: GitHubRepo) => ({
               id: `gh-${r.id}`,
               name: r.name,
               description: r.description || 'No description provided.',
@@ -95,7 +94,7 @@ const Repositories = () => {
     loadRepos();
   }, []);
 
-  const removeDuplicates = (arr: any[], key: string) => {
+  const removeDuplicates = <T extends Record<string, any>>(arr: T[], key: keyof T): T[] => {
     return [...new Map(arr.map(item => [item[key], item])).values()];
   };
 

@@ -7,6 +7,7 @@ import {
   PanelResizeHandle
 } from 'react-resizable-panels';
 import { forgeAIService } from '../services/gemini';
+import { fileService } from '../services/fileService';
 import Spinner from '../components/ui/Spinner';
 import FileExplorer from '../components/ide/FileExplorer';
 import SearchPanel from '../components/ide/SearchPanel';
@@ -14,7 +15,7 @@ import SourceControlPanel from '../components/ide/SourceControlPanel';
 import RunAndDebugPanel from '../components/ide/RunAndDebugPanel';
 import ExtensionsPanel from '../components/ide/ExtensionsPanel';
 import TerminalPanel from '../components/ide/TerminalPanel';
-import { MOCK_FILE_SYSTEM } from '../constants';
+import { useParams } from 'react-router-dom';
 
 // --- SHARED TYPES ---
 interface FileNode {
@@ -252,7 +253,8 @@ const MenuBar = ({ onAction }: { onAction: (action: string) => void }) => {
       <MenuBarItem label="File" items={[
         { label: 'New File', action: () => onAction('new_file'), shortcut: 'Ctrl+N' },
         { label: 'New Folder', action: () => onAction('new_folder') },
-        'Open File...', 'Open Folder...', 'Save', 'Save As...', 'Exit'
+        { label: 'Save', action: () => onAction('save'), shortcut: 'Ctrl+S' },
+        'Open File...', 'Open Folder...', 'Save As...', 'Exit'
       ]} />
       <MenuBarItem label="Edit" items={['Undo', 'Redo', 'Cut', 'Copy', 'Paste', 'Find', 'Replace']} />
       <MenuBarItem label="Selection" items={['Select All', 'Expand Selection', 'Shrink Selection']} />
@@ -289,20 +291,68 @@ const ActivityBarItem = ({ icon, label, active = false, onClick }: { icon: strin
 );
 
 const EditorView = ({ isFocusMode = false }: { isFocusMode?: boolean }) => {
+  // Params
+  const { id: routeWorkspaceId } = useParams();
+  const workspaceId = routeWorkspaceId || 'default'; // Fallback for testing
+
   // State
   const [activeSidePanel, setActiveSidePanel] = useState('explorer');
-  const [openFiles, setOpenFiles] = useState<any[]>([MOCK_FILE_SYSTEM[0]?.children?.[0]?.children?.[0]]); // Default open main.cpp
-  const [activeFileId, setActiveFileId] = useState<string>(MOCK_FILE_SYSTEM[0]?.children?.[0]?.children?.[0]?.id || '');
-  const [fileContent, setFileContent] = useState<string>(MOCK_FILE_SYSTEM[0]?.children?.[0]?.children?.[0]?.content || '');
-  const [language, setLanguage] = useState<string>('cpp');
+  const [openFiles, setOpenFiles] = useState<any[]>([]);
+  const [activeFileId, setActiveFileId] = useState<string>('');
+  const [fileContent, setFileContent] = useState<string>('// Select a file to edit');
+  const [language, setLanguage] = useState<string>('typescript');
   const [line, setLine] = useState(1);
   const [col, setCol] = useState(1);
   const [sidebarVisible, setSidebarVisible] = useState(true);
-  const [terminalLogs, setTerminalLogs] = useState<string[]>([
-    "Welcome to QuantaCode Cloud Shell",
-    "Type 'help' for a list of commands."
-  ]);
-  const [fileSystem, setFileSystem] = useState(MOCK_FILE_SYSTEM);
+  const [fileSystem, setFileSystem] = useState<any[]>([]); // Real files
+  const [isLoadingFiles, setIsLoadingFiles] = useState(false);
+
+  // Load Files on Mount
+  useEffect(() => {
+    loadFiles();
+  }, [workspaceId]);
+
+  const loadFiles = async () => {
+    setIsLoadingFiles(true);
+    try {
+      const files = await fileService.getFiles(workspaceId);
+      // Transform linear list to tree? Or API returns list of paths?
+      // Our API currently returns list of relative paths strings e.g. ["index.js", "src/foo.ts"]
+      // We need to hydrate this into the nested structure FileExplorer expects.
+      const tree = buildTreeFromPaths(files);
+      setFileSystem(tree);
+    } catch (e) {
+      console.error("Failed to load files", e);
+    } finally {
+      setIsLoadingFiles(false);
+    }
+  };
+
+  const buildTreeFromPaths = (paths: string[]) => {
+    const root: any[] = [];
+    paths.forEach(path => {
+      const parts = path.split('/');
+      let currentLevel = root;
+      parts.forEach((part, index) => {
+        const isFile = index === parts.length - 1;
+        const existingPath = currentLevel.find(n => n.name === part);
+        if (existingPath) {
+          currentLevel = existingPath.children || [];
+        } else {
+          const newNode = {
+            id: path, // Use full path as ID for simplicity
+            name: part,
+            type: isFile ? 'file' : 'folder',
+            children: isFile ? undefined : [],
+            language: isFile ? part.split('.').pop() : undefined
+          };
+          currentLevel.push(newNode);
+          if (!isFile) currentLevel = newNode.children!;
+        }
+      });
+    });
+    return root;
+  };
 
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
 
@@ -316,14 +366,36 @@ const EditorView = ({ isFocusMode = false }: { isFocusMode?: boolean }) => {
     }
   };
 
-  const handleFileClick = (file: any) => {
+  const handleFileClick = async (file: any) => {
+    // If it's a folder, toggle expand (handled by FileExplorer mostly, but here we handle file open)
+    if (file.type === 'folder') return;
+
+    // Check if already open
     const isOpen = openFiles.find(f => f.id === file.id);
     if (!isOpen) {
       setOpenFiles([...openFiles, file]);
     }
     setActiveFileId(file.id);
-    setFileContent(file.content || '');
-    setLanguage(file.language || 'plaintext');
+
+    // Fetch Content
+    try {
+      const data = await fileService.getFileContent(workspaceId, file.id); // file.id is path
+      setFileContent(data.content);
+      setLanguage(file.language || 'plaintext');
+    } catch (e) {
+      setFileContent('// Failed to load content');
+    }
+  };
+
+  const handleSave = async () => {
+    if (!activeFileId) return;
+    try {
+      await fileService.saveFile(workspaceId, activeFileId, fileContent);
+      // Show toast success?
+      console.log("File saved!");
+    } catch (e) {
+      console.error("Save failed", e);
+    }
   };
 
   const handleCloseFile = (e: React.MouseEvent, id: string) => {
@@ -333,90 +405,41 @@ const EditorView = ({ isFocusMode = false }: { isFocusMode?: boolean }) => {
     if (activeFileId === id && newFiles.length > 0) {
       const nextFile = newFiles[newFiles.length - 1];
       setActiveFileId(nextFile.id);
-      setFileContent(nextFile.content || '');
-      setLanguage(nextFile.language || 'plaintext');
+      // We should technically fetch content for nextFile here too if not cached
+      handleFileClick(nextFile);
     } else if (newFiles.length === 0) {
       setActiveFileId('');
-      setFileContent('');
+      setFileContent('// Select a file');
     }
   };
 
+  // Run Code triggers the Terminal log mainly
   const handleRunCode = () => {
-    const activeFile = openFiles.find(f => f.id === activeFileId);
-    if (!activeFile) return;
-
-    const timestamp = new Date().toLocaleTimeString();
-    let output = '';
-    let executionOutput = '';
-
-    if (activeFile.name.endsWith('.cpp')) {
-      const match = fileContent.match(/std::cout\s*<<\s*"([^"]*)"/);
-      executionOutput = match ? match[1] : 'Hello TrackCodex!';
-      output = `[${timestamp}] Compiling ${activeFile.name}...\n> g++ ${activeFile.name} -o main && ./main\n${executionOutput}`;
-    } else if (activeFile.name.endsWith('.go')) {
-      const match = fileContent.match(/fmt\.Println\("([^"]*)"\)/);
-      executionOutput = match ? match[1] : 'Server started';
-      output = `[${timestamp}] Executing ${activeFile.name}...\n> go run ${activeFile.name}\n${executionOutput}`;
-    } else if (activeFile.name.endsWith('.ts') || activeFile.name.endsWith('.js')) {
-      const match = fileContent.match(/console\.log\(['"]([^'"]*)['"]\)/);
-      executionOutput = match ? match[1] : 'Process started...';
-      output = `[${timestamp}] Executing ${activeFile.name}...\n> ts-node ${activeFile.name}\n${executionOutput}`;
-    } else {
-      output = `[${timestamp}] Running ${activeFile.name}...\nDone.`;
-    }
-
-    setTerminalLogs(prev => [...prev, output]);
+    // In real app, send socket message to run command
+    console.log("Run triggered. Terminal should handle this via socket.");
   };
 
   const handleAddFile = (name: string, type: 'file' | 'folder') => {
-    const newFile = {
-      id: Date.now().toString(),
-      name,
-      type,
-      language: name.split('.').pop() || 'plaintext',
-      content: type === 'file' ? '// New file created' : undefined,
-      children: type === 'folder' ? [] : undefined
-    };
-
-    // Create a deep copy to avoid mutation issues
-    const newFS = JSON.parse(JSON.stringify(fileSystem));
-
-    // Add to the first root folder (Project Root)
-    if (newFS[0]) {
-      if (!newFS[0].children) newFS[0].children = [];
-      newFS[0].children.push(newFile);
-
-      // Sort: Folders first, then files
-      newFS[0].children.sort((a: any, b: any) => {
-        if (a.type === b.type) return a.name.localeCompare(b.name);
-        return a.type === 'folder' ? -1 : 1;
-      });
+    // Optimistic UI update + API call to create file? 
+    // For now, let's just reload files after creation if we had a create API
+    // We only have 'saveFile' which creates if not exists.
+    if (type === 'file') {
+      const path = name; // Simplified: assumes root
+      fileService.saveFile(workspaceId, path, '// New File').then(() => loadFiles());
     }
-
-    setFileSystem(newFS);
-    if (type === 'file') handleFileClick(newFile);
   };
 
   const handleMenuAction = (action: string) => {
     switch (action) {
       case 'new_file':
-        const fileName = prompt('Enter file name:');
+        const fileName = prompt('Enter file name (e.g. src/utils.ts):');
         if (fileName) handleAddFile(fileName, 'file');
         break;
-      case 'new_folder':
-        const folderName = prompt('Enter folder name:');
-        if (folderName) handleAddFile(folderName, 'folder');
+      case 'save':
+        handleSave();
         break;
       case 'toggle_sidebar':
         setSidebarVisible(!sidebarVisible);
-        break;
-      case 'open_view':
-        // Placeholder
-        break;
-      case 'toggle_terminal':
-        // This would require lifting state or finding the terminal panel toggle in the child
-        // For now, let's just log a message since terminal layout is hardcoded in PanelGroup
-        setTerminalLogs(prev => [...prev, "Terminal toggled via menu (simulated)"]);
         break;
       case 'run_code':
         handleRunCode();
@@ -424,21 +447,35 @@ const EditorView = ({ isFocusMode = false }: { isFocusMode?: boolean }) => {
     }
   };
 
-  const activeFileName = openFiles.find(f => f.id === activeFileId)?.name || 'Untitled';
+  // Keyboard shortcut for save
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        handleSave();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activeFileId, fileContent]);
 
   const renderSidePanel = () => {
     switch (activeSidePanel) {
       case 'explorer': return (
         <div className="h-full flex flex-col">
           <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 px-4 py-2 bg-[#252526]">Explorer</h2>
-          <FileExplorer
-            fileSystem={fileSystem}
-            onFileClick={handleFileClick}
-            openFiles={openFiles}
-            activeFileId={activeFileId}
-            onCloseFile={handleCloseFile}
-            onAddFile={handleAddFile}
-          />
+          {isLoadingFiles ? (
+            <div className="p-4 text-xs text-slate-500">Loading workspace...</div>
+          ) : (
+            <FileExplorer
+              fileSystem={fileSystem}
+              onFileClick={handleFileClick}
+              openFiles={openFiles}
+              activeFileId={activeFileId}
+              onCloseFile={handleCloseFile}
+              onAddFile={handleAddFile}
+            />
+          )}
         </div>
       );
       case 'search': return <SearchPanel />;
@@ -515,12 +552,6 @@ const EditorView = ({ isFocusMode = false }: { isFocusMode?: boolean }) => {
                   >
                     <span className="material-symbols-outlined !text-[18px] text-green-500">play_arrow</span>
                   </button>
-                  <button className="p-1 hover:bg-[#3e3e42] rounded text-[#cccccc] hover:text-white transition-colors flex items-center justify-center">
-                    <span className="material-symbols-outlined !text-[16px]">splitscreen</span>
-                  </button>
-                  <button className="p-1 hover:bg-[#3e3e42] rounded text-[#cccccc] hover:text-white transition-colors flex items-center justify-center">
-                    <span className="material-symbols-outlined !text-[16px]">more_horiz</span>
-                  </button>
                 </div>
               </div>
 
@@ -546,19 +577,7 @@ const EditorView = ({ isFocusMode = false }: { isFocusMode?: boolean }) => {
                           minimap: { enabled: true, showSlider: 'always' },
                           fontSize: 14,
                           fontFamily: 'JetBrains Mono, monospace',
-                          scrollBeyondLastLine: false,
                           automaticLayout: true,
-                          tabSize: 4,
-                          wordWrap: 'on',
-                          padding: { top: 10 },
-                          cursorBlinking: 'smooth',
-                          cursorSmoothCaretAnimation: 'on',
-                          smoothScrolling: true,
-                          folding: true,
-                          renderWhitespace: 'selection',
-                          bracketPairColorization: { enabled: true },
-                          guides: { bracketPairs: true, indentation: true },
-                          stickyScroll: { enabled: true }
                         }}
                       />
                     </div>
@@ -566,16 +585,6 @@ const EditorView = ({ isFocusMode = false }: { isFocusMode?: boolean }) => {
                     <div className="flex-1 flex flex-col items-center justify-center text-[#555] bg-[#1e1e1e]">
                       <span className="material-symbols-outlined !text-[64px] mb-4 opacity-20">code_off</span>
                       <p className="text-sm">Select a file from the explorer to start editing</p>
-                      <div className="mt-8 flex gap-4 text-xs opacity-60">
-                        <div className="flex flex-col items-center gap-1">
-                          <span className="font-mono bg-[#333] px-2 py-0.5 rounded">Ctrl+P</span>
-                          <span>Quick Open</span>
-                        </div>
-                        <div className="flex flex-col items-center gap-1">
-                          <span className="font-mono bg-[#333] px-2 py-0.5 rounded">Ctrl+Shift+F</span>
-                          <span>Find in Files</span>
-                        </div>
-                      </div>
                     </div>
                   )}
                 </Panel>
@@ -583,7 +592,7 @@ const EditorView = ({ isFocusMode = false }: { isFocusMode?: boolean }) => {
                 <PanelResizeHandle className="h-1 bg-[#2b2b2b] hover:bg-primary transition-colors" />
 
                 <Panel defaultSize={25} minSize={10} collapsible>
-                  <TerminalPanel logs={terminalLogs} />
+                  <TerminalPanel workspaceId={workspaceId} />
                 </Panel>
               </PanelGroup>
             </div>
@@ -592,7 +601,7 @@ const EditorView = ({ isFocusMode = false }: { isFocusMode?: boolean }) => {
           <PanelResizeHandle className="w-1 bg-[#2b2b2b] hover:bg-primary transition-colors" />
 
           <Panel defaultSize={25} minSize={20} collapsible collapsed={isFocusMode}>
-            <ForgeAIAssistantPanel editorRef={editorRef} activeFile={activeFileName} />
+            <ForgeAIAssistantPanel editorRef={editorRef} activeFile={openFiles.find(f => f.id === activeFileId)?.name || 'Untitled'} />
           </Panel>
         </PanelGroup>
       </div>
@@ -604,24 +613,12 @@ const EditorView = ({ isFocusMode = false }: { isFocusMode?: boolean }) => {
               <span className="material-symbols-outlined !text-[14px]">source_control</span>
               <span className="font-bold">main*</span>
             </div>
-            <div className="hover:bg-white/10 px-2 h-full flex items-center cursor-pointer">
-              <span className="material-symbols-outlined !text-[14px] mr-1">sync</span>
-              0
-            </div>
-            <div className="hover:bg-white/10 px-2 h-full flex items-center cursor-pointer">
-              0 errors, 0 warnings
-            </div>
           </div>
           <div className="flex items-center gap-4 h-full">
             <div className="hover:bg-white/10 px-2 h-full flex items-center cursor-pointer">
               Ln {line}, Col {col}
             </div>
-            <div className="hover:bg-white/10 px-2 h-full flex items-center cursor-pointer">Spaces: 4</div>
-            <div className="hover:bg-white/10 px-2 h-full flex items-center cursor-pointer">UTF-8</div>
             <div className="hover:bg-white/10 px-2 h-full flex items-center cursor-pointer uppercase">{language}</div>
-            <div className="hover:bg-white/10 px-2 h-full flex items-center cursor-pointer">
-              <span className="material-symbols-outlined !text-[14px]">notifications</span>
-            </div>
           </div>
         </footer>
       )}

@@ -1,0 +1,498 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --- CORE IDENTITY ---
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  username  String   @unique
+  name      String
+  password  String?  // Hashed with bcrypt
+  avatar    String?
+  role      String   @default("user") // user, admin, super_admin
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Security & Verification
+  emailVerified    Boolean   @default(false)
+  emailVerifiedAt  DateTime?
+  accountLocked    Boolean   @default(false)
+  lockReason       String?
+  lockedAt         DateTime?
+  
+  // Two-Factor Authentication
+  twoFactorEnabled Boolean   @default(false)
+  twoFactorSecret  String?
+  
+  // Account Lifecycle
+  deletedAt        DateTime? // Soft delete
+  deleteScheduledFor DateTime? // Hard delete scheduled
+  
+  // Login Tracking
+  lastLoginAt      DateTime?
+  lastLoginIp      String?
+  lastLoginUserAgent String?
+  
+  // Onboarding
+  profileCompleted Boolean   @default(false)
+  onboardingStep   String?   // "profile", "preferences", "complete"
+  
+  // OTP Auth (existing)
+  otpCode      String?
+  otpExpiresAt DateTime?
+
+  // Relations
+  profile      Profile?
+  workspaces   Workspace[] 
+  sessions     Session[]
+  organizations OrgMember[]
+  posts        CommunityPost[]
+  comments     CommunityComment[]
+  jobs         Job[]            @relation("JobCreator")
+  applications JobApplication[]
+  loginAttempts LoginAttempt[]
+  permissions   Permission[]
+  
+  // Analytics
+  activityLogs    ActivityLog[]
+  aiUsageLogs     AIUsageLog[]
+  freelancerProfile FreelancerProfile?
+  givenReviews    JobReview[] @relation("Reviewer")
+  dailyContributions DailyContribution[]
+  wallet          Wallet?
+  notifications   Notification[]
+  oauthAccounts   OAuthAccount[]
+  
+  @@index([email])
+  @@index([deletedAt])
+  @@index([lastLoginAt])
+}
+
+model Profile {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id])
+  bio         String?
+  company     String?
+  location    String?
+  website     String?
+  reputation  Int      @default(0) // Karma
+  
+  socialLinks SocialLink[]
+}
+
+model SocialLink {
+  id        String   @id @default(uuid())
+  profileId String
+  profile   Profile  @relation(fields: [profileId], references: [id])
+  platform  String   // github, linkedin, twitter
+  url       String
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  sessionId String   @unique // Redis session ID
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Session Context
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  workspaceId    String?
+  workspace      Workspace? @relation(fields: [workspaceId], references: [id])
+  
+  // Security
+  ipAddress      String
+  userAgent      String
+  csrfToken      String
+  
+  // Lifecycle
+  expiresAt      DateTime
+  lastActivityAt DateTime @default(now())
+  createdAt      DateTime @default(now())
+  revokedAt      DateTime?
+  
+  @@index([userId])
+  @@index([sessionId])
+  @@index([expiresAt])
+}
+
+// OAuth Accounts for external providers (Google, GitHub, etc.)
+model OAuthAccount {
+  id                String    @id @default(uuid())
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider          String    // "google" | "github"
+  providerAccountId String    // External user ID from provider
+  accessToken       String?   @db.Text
+  refreshToken      String?   @db.Text
+  expiresAt         DateTime?
+  tokenType         String?
+  scope             String?
+  idToken           String?   @db.Text
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+// Login Attempts for rate limiting and security monitoring
+model LoginAttempt {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  email     String
+  ipAddress String
+  userAgent String
+  success   Boolean
+  failureReason String? // "invalid_password", "account_locked", "too_many_attempts"
+  createdAt DateTime @default(now())
+  
+  @@index([email, createdAt])
+  @@index([ipAddress, createdAt])
+  @@index([success, createdAt])
+}
+
+// Fine-grained permissions for resource-level authorization
+model Permission {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resource   String   // "job", "workspace", "organization", "repository"
+  action     String   // "read", "write", "delete", "admin"
+  resourceId String?  // Specific resource ID (null = global permission)
+  grantedBy  String?  // User ID who granted this permission
+  createdAt  DateTime @default(now())
+  expiresAt  DateTime?
+  
+  @@unique([userId, resource, action, resourceId])
+  @@index([userId])
+  @@index([resource, resourceId])
+}
+
+// --- ORGANIZATIONS ---
+
+model Organization {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  avatar      String?
+  location    String?
+  website     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  members     OrgMember[]
+  teams       Team[]
+  repositories Repository[]
+  jobs        Job[]
+  sessions    Session[]
+
+  @@index([name])
+}
+
+model OrgMember {
+  id        String   @id @default(uuid())
+  orgId     String
+  org       Organization @relation(fields: [orgId], references: [id])
+  userId    String
+  user      User         @relation(fields: [userId], references: [id])
+  role      OrgRole      @default(MEMBER)
+  joinedAt  DateTime     @default(now())
+
+  @@unique([orgId, userId])
+  @@index([role])
+}
+
+enum OrgRole {
+  OWNER
+  ADMIN
+  MEMBER
+  GUEST
+}
+
+model Team {
+  id          String   @id @default(uuid())
+  orgId       String
+  org         Organization @relation(fields: [orgId], references: [id])
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+}
+
+// --- DEVELOPMENT ---
+
+model Workspace {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  status      String   @default("stopped") // running, stopped
+  environment String?  // DEV, STAGING, PROD
+  runtime     String?  // Node 20, Python 3.11
+  repoUrl     String?
+  ownerId     String
+  owner       User     @relation(fields: [ownerId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  activityLogs ActivityLog[]
+  aiUsageLogs  AIUsageLog[]
+  sessions     Session[]
+}
+
+model Repository {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  isPublic    Boolean  @default(false)
+  stars       Int      @default(0)
+  forks       Int      @default(0)
+  language    String?
+  
+  orgId       String?
+  org         Organization? @relation(fields: [orgId], references: [id])
+  
+  securityAlerts SecurityAlert[]
+  aiTasks        AITask[]
+  jobs           Job[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model SecurityAlert {
+  id           String     @id @default(uuid())
+  repoId       String
+  repository   Repository @relation(fields: [repoId], references: [id])
+  severity     String     // Critical, High, Medium
+  vulnerability String
+  status       String     // Open, Fixed
+  createdAt    DateTime   @default(now())
+}
+
+model AITask {
+  id           String     @id @default(uuid())
+  repoId       String
+  repository   Repository @relation(fields: [repoId], references: [id])
+  taskName     String
+  model        String
+  status       String     // Processing, Success
+  result       String?    // JSON or Text
+  createdAt    DateTime   @default(now())
+}
+
+// --- JOBS & HIRING ---
+
+model Job {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  budget      String?
+  type        String   // Contract, Full-time
+  status      String   @default("Open")
+  techStack   String[]
+  
+  creatorId   String
+  creator     User     @relation("JobCreator", fields: [creatorId], references: [id])
+  orgId       String?
+  org         Organization? @relation(fields: [orgId], references: [id])
+  repositoryId String?
+  repository  Repository? @relation(fields: [repositoryId], references: [id])
+
+  applications JobApplication[]
+  createdAt   DateTime @default(now())
+  
+  @@index([status])
+  @@index([type])
+  @@index([creatorId])
+  @@index([createdAt(sort: Desc)])
+  
+  reviews     JobReview[]
+  escrowContract EscrowContract?
+}
+
+// Enhanced Application Model
+model JobApplication {
+  id        String   @id @default(uuid())
+  jobId     String
+  job       Job      @relation(fields: [jobId], references: [id])
+  applicantId String
+  applicant   User     @relation(fields: [applicantId], references: [id])
+  
+  // Lifecycle Stages: Pending -> Screening -> Interview -> Offer -> Hired | Rejected
+  status    String   @default("Pending")
+  
+  // Data
+  coverLetter String?
+  resumeUrl   String?  // Link to MinIO/S3
+  
+  // Metadata for KanBan
+  stage       String   @default("Applied") // Applied, Phone Screen, Tech Interview, Final Round
+  score       Int      @default(0) // 0-100 Scorecard
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([jobId, applicantId]) // Prevent duplicate applications
+  @@index([status])
+  @@index([stage])
+}
+
+// --- COMMUNITY ---
+
+model CommunityPost {
+  id        String   @id @default(uuid())
+  title     String
+  content   String
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+  upvotes   Int      @default(0)
+  createdAt DateTime @default(now())
+  
+  comments  CommunityComment[]
+}
+
+model CommunityComment {
+  id        String   @id @default(uuid())
+  postId    String
+  post      CommunityPost @relation(fields: [postId], references: [id])
+  authorId  String
+  author    User          @relation(fields: [authorId], references: [id])
+  text      String
+  createdAt DateTime      @default(now())
+}
+
+model Message {
+  id         String   @id @default(uuid())
+  senderId   String
+  receiverId String
+  content    String
+  readAt     DateTime?
+  createdAt  DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  type      String   // message, system, job, alert
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+// --- ANALYTICS & PROFILE ---
+
+model ActivityLog {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  workspaceId String?
+  workspace   Workspace? @relation(fields: [workspaceId], references: [id])
+  action      String   // commit, save, push, snippet_publish
+  metadata    Json?    // { "file": "main.ts", "lines": 12 }
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt(sort: Desc)])
+}
+
+model AIUsageLog {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  workspaceId String?
+  workspace   Workspace? @relation(fields: [workspaceId], references: [id])
+  actionType  String   // generate, refactor, debug, test, audit
+  tokensUsed  Int      @default(0)
+  model       String   // DeepSeek-r1, Claude-3.5
+  createdAt   DateTime @default(now())
+}
+
+model FreelancerProfile {
+  id             String   @id @default(uuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id])
+  isPublic       Boolean  @default(true)
+  rating         Float    @default(0.0)
+  jobsCompleted  Int      @default(0)
+  topCategory    String?
+  repeatHireRate Int      @default(0) // Percentage
+  hourlyRate     String?  // e.g. "$50/hr"
+  
+  reviews        JobReview[]
+}
+
+model JobReview {
+  id           String   @id @default(uuid())
+  freelancerId String
+  freelancer   FreelancerProfile @relation(fields: [freelancerId], references: [id])
+  jobId        String
+  job          Job      @relation(fields: [jobId], references: [id])
+  reviewerId   String
+  reviewer     User     @relation("Reviewer", fields: [reviewerId], references: [id])
+  rating       Int      // 1-5
+  comment      String?
+  createdAt    DateTime @default(now())
+}
+
+model DailyContribution {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  date      String   // YYYY-MM-DD
+  count     Int      @default(0)
+  level     Int      @default(0) // 0-4
+  
+  @@unique([userId, date])
+}
+
+// --- FINANCIAL SYSTEM ---
+
+model Wallet {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id])
+  balance   Float    @default(0.0)
+  currency  String   @default("USD")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  transactions Transaction[]
+}
+
+model Transaction {
+  id          String   @id @default(uuid())
+  walletId    String
+  wallet      Wallet   @relation(fields: [walletId], references: [id])
+  amount      Float
+  type        String   // DEPOSIT, WITHDRAWAL, ESCROW_HOLD, RELEASE, PAYOUT
+  description String?
+  referenceId String?  // Job ID or External Payment ID
+  status      String   @default("COMPLETED") // PENDING, COMPLETED, FAILED
+  createdAt   DateTime @default(now())
+
+  @@index([type])
+  @@index([status])
+  @@index([walletId])
+}
+
+model EscrowContract {
+  id           String   @id @default(uuid())
+  jobId        String   @unique
+  job          Job      @relation(fields: [jobId], references: [id])
+  amountLocked Float
+  status       String   @default("HELD") // HELD, RELEASED, DISPUTED, REFUNDED
+  freelancerId String?  // The recipient
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}

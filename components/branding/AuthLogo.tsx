@@ -1,26 +1,21 @@
-import React from 'react';
+import React from "react";
 
 const AuthLogo = ({ size = 64 }: { size?: number }) => (
-  <svg 
-    height={size} 
-    viewBox="0 0 512 512" 
-    fill="none" 
+  <svg
+    height={size}
+    viewBox="0 0 512 512"
+    fill="none"
     xmlns="http://www.w3.org/2000/svg"
     aria-label="TrackCodex Logo"
+    className="drop-shadow-[0_0_20px_rgba(59,130,246,0.5)]"
   >
-    <path 
-      d="M256 64L448 256L320 384L128 192L256 64Z" 
-      fill="#e6edf3"
+    {/* Chevron */}
+    <path
+      d="M256 80 L464 256 L384 336 L256 208 L128 336 L48 256 Z"
+      fill="#ffffff"
     />
-    <path 
-      d="M256 448L64 256L192 128L384 320L256 448Z" 
-      fill="#e6edf3"
-      fillOpacity="0.7"
-    />
-    <path 
-      d="M256 160L352 256L256 352L160 256L256 160Z" 
-      fill="#0d1117"
-    />
+    {/* Diamond */}
+    <path d="M256 368 L320 432 L256 496 L192 432 Z" fill="#3b82f6" />
   </svg>
 );
 

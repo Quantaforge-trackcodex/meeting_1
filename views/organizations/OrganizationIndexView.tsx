@@ -8,7 +8,7 @@ import { Organization } from '../../types';
 const OrganizationCard: React.FC<{ org: Organization }> = ({ org }) => {
     const navigate = useNavigate();
     return (
-        <div 
+        <div
             onClick={() => navigate(`/org/${org.id}`)}
             className="bg-[#161b22] border border-[#30363d] rounded-2xl p-6 hover:border-primary/50 transition-all group cursor-pointer flex items-center gap-6"
         >
@@ -35,7 +35,7 @@ const OrganizationIndexView = () => {
                         <h1 className="text-3xl font-black text-white tracking-tight mb-2">Your Organizations</h1>
                         <p className="text-slate-500">Select an organization to manage its repositories, teams, and members.</p>
                     </div>
-                    <button 
+                    <button
                         onClick={() => { /* Logic to create new org */ }}
                         className="bg-primary hover:bg-blue-600 text-white px-5 py-2.5 rounded-lg font-bold text-sm flex items-center gap-2 transition-all shadow-lg shadow-primary/20"
                     >

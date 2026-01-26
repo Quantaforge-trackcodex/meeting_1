@@ -116,8 +116,8 @@ const ProfileView = () => {
                 {tab.label}
                 {tab.badge && (
                   <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${tab.label === 'Security'
-                      ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                      : 'bg-gh-bg-secondary text-gh-text-secondary border border-gh-border'
+                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                    : 'bg-gh-bg-secondary text-gh-text-secondary border border-gh-border'
                     }`}>
                     {tab.badge}
                   </span>

@@ -1,9 +1,8 @@
-
 import React, { useMemo } from 'react';
 
 const ContributionHeatmap = () => {
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  
+
   const heatmapData = useMemo(() => {
     return Array.from({ length: 7 * 52 }, () => Math.floor(Math.random() * 5));
   }, []);
@@ -30,8 +29,8 @@ const ContributionHeatmap = () => {
             </div>
             <div className="grid grid-flow-col grid-rows-7 gap-1">
               {heatmapData.map((val, i) => (
-                <div 
-                  key={i} 
+                <div
+                  key={i}
                   className={`rounded-[2px] w-3 h-3 transition-colors hover:ring-1 hover:ring-white/50 cursor-pointer ${getIntensityColor(val)}`}
                 />
               ))}
@@ -39,13 +38,13 @@ const ContributionHeatmap = () => {
           </div>
         </div>
         <div className="mt-4 flex items-center justify-end gap-2 text-[10px] text-slate-600">
-           <span>Less</span>
-           <div className="flex gap-1">
-              {[0, 1, 2, 3, 4].map(l => (
-                <div key={l} className={`size-2.5 rounded-[1px] ${getIntensityColor(l)}`} />
-              ))}
-           </div>
-           <span>More</span>
+          <span>Less</span>
+          <div className="flex gap-1">
+            {[0, 1, 2, 3, 4].map(l => (
+              <div key={l} className={`size-2.5 rounded-[1px] ${getIntensityColor(l)}`} />
+            ))}
+          </div>
+          <span>More</span>
         </div>
       </div>
     </div>

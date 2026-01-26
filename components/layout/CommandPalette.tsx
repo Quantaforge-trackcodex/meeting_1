@@ -1,114 +1,69 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MOCK_REPOS, MOCK_WORKSPACES, MOCK_JOBS, MOCK_LIBRARY_RESOURCES, MOCK_ORGANIZATIONS } from '../../constants';
+import { api } from '../../context/AuthContext'; // Use configured Axios instance
 
 interface SearchResult {
   id: string;
-  type: 'repo' | 'workspace' | 'job' | 'library' | 'nav' | 'org';
+  type: 'repo' | 'workspace' | 'job' | 'library' | 'nav' | 'org' | 'user';
   label: string;
   subLabel?: string;
   icon: string;
   action: () => void;
   group: string;
+  url?: string;
 }
 
 const CommandPalette = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) => {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [results, setResults] = useState<SearchResult[]>([]);
+  const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Navigation Commands
+  // Navigation Commands (Static)
   const navCommands: SearchResult[] = [
     { id: 'nav-home', type: 'nav', label: 'Go to Home', icon: 'home', group: 'Navigation', action: () => navigate('/dashboard/home') },
     { id: 'nav-settings', type: 'nav', label: 'Settings', icon: 'settings', group: 'Navigation', action: () => navigate('/settings') },
   ];
 
-  // Aggregated Data
-  const getResults = (): SearchResult[] => {
-    const query = search.toLowerCase();
-    if (!query) return navCommands;
+  // Fetch Results
+  useEffect(() => {
+    if (!search || search.length < 2) {
+      setResults(navCommands);
+      return;
+    }
 
-    const results: SearchResult[] = [];
+    const timer = setTimeout(async () => {
+      setLoading(true);
+      try {
+        const { data } = await api.get(`/search?q=${encodeURIComponent(search)}`);
 
-    // 1. Organizations (Owners)
-    MOCK_ORGANIZATIONS.forEach(org => {
-      if (org.name.toLowerCase().includes(query)) {
-        results.push({
-          id: `org-${org.id}`,
-          type: 'org',
-          label: org.name,
-          icon: 'domain',
-          group: 'Owners',
-          action: () => navigate(`/org/${org.id}`)
-        });
+        // Map API results to UI format
+        const apiResults: SearchResult[] = data.results.map((item: any) => ({
+          id: item.id,
+          type: item.type,
+          label: item.label,
+          subLabel: item.subLabel,
+          icon: item.icon,
+          group: item.group,
+          action: () => navigate(item.url)
+        }));
+
+        setResults([...navCommands, ...apiResults]);
+        setSelectedIndex(0);
+      } catch (error) {
+        console.error("Search failed", error);
+      } finally {
+        setLoading(false);
       }
-    });
+    }, 300); // Debounce 300ms
 
-    // 2. Repositories (Public Only)
-    MOCK_REPOS.filter(r => r.visibility !== 'PRIVATE' || r.isPublic).forEach(repo => {
-      if (repo.name.toLowerCase().includes(query) || repo.description.toLowerCase().includes(query)) {
-        results.push({
-          id: `repo-${repo.id}`,
-          type: 'repo',
-          label: repo.name,
-          subLabel: repo.description,
-          icon: 'book', // GitHub uses book icon for repos
-          group: 'Repositories',
-          action: () => navigate(`/repo/${repo.id}`)
-        });
-      }
-    });
+    return () => clearTimeout(timer);
+  }, [search]);
 
-    // 3. Workspaces (Including all for user)
-    MOCK_WORKSPACES.forEach(ws => {
-      if (ws.name.toLowerCase().includes(query)) {
-        results.push({
-          id: `ws-${ws.id}`,
-          type: 'workspace',
-          label: ws.name,
-          subLabel: ws.repo,
-          icon: 'terminal',
-          group: 'Workspaces',
-          action: () => navigate(`/workspace/${ws.id}`)
-        });
-      }
-    });
-
-    // 4. Jobs
-    MOCK_JOBS.forEach(job => {
-      if (job.title.toLowerCase().includes(query) || job.description.toLowerCase().includes(query)) {
-        results.push({
-          id: `job-${job.id}`,
-          type: 'job',
-          label: job.title,
-          subLabel: job.budget,
-          icon: 'work',
-          group: 'Jobs',
-          action: () => navigate(`/jobs/${job.id}`)
-        });
-      }
-    });
-
-    // 5. Library Resources (Public Only - assuming logic)
-    MOCK_LIBRARY_RESOURCES.filter(lib => lib.visibility === 'PUBLIC').forEach(lib => {
-      if (lib.name.toLowerCase().includes(query) || lib.description.toLowerCase().includes(query)) {
-        results.push({
-          id: `lib-${lib.id}`,
-          type: 'library',
-          label: lib.name,
-          icon: 'auto_stories',
-          group: 'Library',
-          action: () => navigate(`/dashboard/library?id=${lib.id}`) // Assuming route
-        });
-      }
-    });
-
-    return results;
-  };
-
-  const filteredResults = getResults();
-  const groupedResults = filteredResults.reduce((acc, item) => {
+  // Grouping for render
+  const groupedResults = results.reduce((acc, item) => {
     if (!acc[item.group]) acc[item.group] = [];
     acc[item.group].push(item);
     return acc;
@@ -125,12 +80,12 @@ const CommandPalette = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => v
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setSelectedIndex(prev => (prev + 1) % filteredResults.length);
+      setSelectedIndex(prev => (prev + 1) % results.length);
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      setSelectedIndex(prev => (prev - 1 + filteredResults.length) % filteredResults.length);
+      setSelectedIndex(prev => (prev - 1 + results.length) % results.length);
     } else if (e.key === 'Enter') {
-      filteredResults[selectedIndex]?.action();
+      results[selectedIndex]?.action();
       onClose();
     } else if (e.key === 'Escape') {
       onClose();
@@ -160,16 +115,21 @@ const CommandPalette = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => v
 
         {/* Results */}
         <div className="flex-1 overflow-y-auto custom-scrollbar p-2">
-          {Object.entries(groupedResults).map(([group, items]) => (
+          {loading && (
+            <div className="p-4 flex justify-center text-slate-500">
+              <span className="material-symbols-outlined animate-spin">progress_activity</span>
+            </div>
+          )}
+          {!loading && Object.entries(groupedResults).map(([group, items]) => (
             <div key={group} className="mb-2">
               <h3 className="px-3 py-1.5 text-xs font-bold text-slate-500">{group}</h3>
               {items.map((item) => {
-                const isSelected = filteredResults.indexOf(item) === selectedIndex;
+                const isSelected = results.indexOf(item) === selectedIndex;
                 return (
                   <div
                     key={item.id}
                     onClick={() => { item.action(); onClose(); }}
-                    onMouseEnter={() => setSelectedIndex(filteredResults.indexOf(item))}
+                    onMouseEnter={() => setSelectedIndex(results.indexOf(item))}
                     className={`flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer group ${isSelected ? 'bg-[#1f6feb] text-white' : 'text-slate-300 hover:bg-[#161b22]'}`}
                   >
                     <span className={`material-symbols-outlined !text-[18px] ${isSelected ? 'text-white' : 'text-slate-500'}`}>{item.icon}</span>
@@ -185,7 +145,7 @@ const CommandPalette = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => v
               })}
             </div>
           ))}
-          {filteredResults.length === 0 && (
+          {!loading && results.length === 0 && (
             <div className="p-8 text-center text-slate-500 text-sm">No results found for "{search}"</div>
           )}
         </div>

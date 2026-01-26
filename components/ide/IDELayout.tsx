@@ -10,9 +10,18 @@ import SearchPanel from './SearchPanel';
 import RunAndDebugPanel from './RunAndDebugPanel';
 import { MOCK_FILE_SYSTEM } from '../../constants';
 
+interface FileSystemItem {
+    id: string;
+    name: string;
+    type: 'file' | 'folder';
+    content?: string;
+    language?: string;
+    children?: FileSystemItem[];
+}
+
 const IDELayout = () => {
     const [activeView, setActiveView] = useState('explorer');
-    const [openFiles, setOpenFiles] = useState<any[]>([MOCK_FILE_SYSTEM[0]?.children?.[0]?.children?.[0]]); // Open main.cpp default
+    const [openFiles, setOpenFiles] = useState<FileSystemItem[]>([MOCK_FILE_SYSTEM[0]?.children?.[0]?.children?.[0]]); // Open main.cpp default
     const [activeFileId, setActiveFileId] = useState<string>(MOCK_FILE_SYSTEM[0]?.children?.[0]?.children?.[0]?.id || '');
     const [fileContent, setFileContent] = useState<string>(MOCK_FILE_SYSTEM[0]?.children?.[0]?.children?.[0]?.content || '');
     const [language, setLanguage] = useState<string>('cpp');
@@ -31,7 +40,7 @@ const IDELayout = () => {
         }
     };
 
-    const handleFileClick = (file: any) => {
+    const handleFileClick = (file: FileSystemItem) => {
         const isOpen = openFiles.find(f => f.id === file.id);
         if (!isOpen) {
             setOpenFiles([...openFiles, file]);
@@ -71,6 +80,7 @@ const IDELayout = () => {
             executionOutput = match ? match[1] : 'Server started';
             output = `[${timestamp}] Executing ${activeFile.name}...\n> go run ${activeFile.name}\n${executionOutput}`;
         } else if (activeFile.name.endsWith('.ts') || activeFile.name.endsWith('.js')) {
+            // eslint-disable-next-line no-console
             const match = fileContent.match(/console\.log\(['"]([^'"]*)['"]\)/);
             executionOutput = match ? match[1] : 'Process started...';
             output = `[${timestamp}] Executing ${activeFile.name}...\n> ts-node ${activeFile.name}\n${executionOutput}`;
@@ -81,10 +91,10 @@ const IDELayout = () => {
         setTerminalLogs(prev => [...prev, output]);
     };
 
-    const [fileSystem, setFileSystem] = useState(MOCK_FILE_SYSTEM);
+    const [fileSystem, setFileSystem] = useState<FileSystemItem[]>(MOCK_FILE_SYSTEM);
 
     const handleAddFile = (name: string, type: 'file' | 'folder') => {
-        const newFile = {
+        const newFile: FileSystemItem = {
             id: Date.now().toString(),
             name,
             type,
@@ -102,7 +112,7 @@ const IDELayout = () => {
             newFS[0].children.push(newFile);
 
             // Sort: Folders first, then files
-            newFS[0].children.sort((a: any, b: any) => {
+            newFS[0].children.sort((a: FileSystemItem, b: FileSystemItem) => {
                 if (a.type === b.type) return a.name.localeCompare(b.name);
                 return a.type === 'folder' ? -1 : 1;
             });

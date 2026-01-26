@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { MOCK_TRIAL_REPOS } from '../../constants';
 import { TrialRepo } from '../../types';

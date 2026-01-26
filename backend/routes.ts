@@ -1,6 +1,12 @@
 import { FastifyInstance } from 'fastify';
+import { communityRoutes } from './routes/community';
+import { applicationRoutes } from './routes/applications';
+
+import { walletRoutes } from './routes/wallet';
 
 export async function routes(fastify: FastifyInstance) {
+  fastify.register(walletRoutes, { prefix: '/api/v1/wallet' });
+
   fastify.get('/', async () => {
     return { status: 'ok', message: 'TrackCodex Backend API v1' };
   });
